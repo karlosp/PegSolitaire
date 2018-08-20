@@ -11,20 +11,21 @@ namespace ps {
   };
 
   using Board = std::vector<std::vector<PositionType>>;
-
+  int count = 0;
   struct PegPosition {
-    //public:
-    //  std::vector<PositionType> const& get_board() {
-    //    return board;
-    //  }
-    //private:
+    PegPosition() {
+      ++count;
+    }
+    ~PegPosition() {
+      --count;
+    }
+
     Board board;
     std::shared_ptr<PegPosition> parent = nullptr;
     int from_row = -1;
     int to_row = -1;
     int from_col = -1;
     int to_col = -1;
-    
   };
 
   void print_position(PegPosition const& position) {
@@ -100,24 +101,16 @@ namespace ps {
     return counter;
   }
 
-  std::vector<PegPosition> solve_peg_solitaire(PegPosition const& peg_position) {
+  std::vector<std::shared_ptr<PegPosition>> solve_peg_solitaire(PegPosition const& peg_position) {
     std::vector<std::shared_ptr<PegPosition>> positions;
     auto start_pos = std::make_shared<PegPosition>();
     start_pos->board = peg_position.board;
     positions.push_back(start_pos);
 
-    const int most_right_col = positions.back()->board.size() - 3;
-    const int most_left_col = 2;
-    const int most_bottom_row = positions.back()->board.front().size() - 3;
-    const int most_top_row = 2;
-
     while (!positions.empty() && count_pegs((*positions.back()).board) != 1) {
       const auto parent_position = positions.back();
       const auto board = parent_position->board;
       positions.pop_back();
-
-      //std::cout << "Parent:\n";
-      //print_position(*parent_position);
 
       // generate all possible positions
       for (auto row = 0u; row < board.size(); ++row) {
@@ -143,8 +136,6 @@ namespace ps {
             peg_position->to_row = row;
             peg_position->to_col = col + 2;
 
-            //std::cout << "Adding to queue move right:\n";
-            //print_position(*peg_position);
             positions.push_back(peg_position);
           }
           // can move left
@@ -214,11 +205,11 @@ namespace ps {
       }
     }
 
-    std::vector<PegPosition> results;
+    std::vector<std::shared_ptr<PegPosition>> results;
     auto current_position = *positions.rbegin();
 
     while (current_position->parent) {
-      results.push_back(*current_position);
+      results.push_back(current_position);
       current_position = current_position->parent;
     }
 
@@ -226,9 +217,9 @@ namespace ps {
   }
 
 
-  void print_steps(std::vector<PegPosition> const& steps) {
+  void print_steps(std::vector<std::shared_ptr<PegPosition>> const& steps) {
     for (auto const& position : steps) {
-      print_position(position);
+      print_position(*position.get());
     }
   }
 }
