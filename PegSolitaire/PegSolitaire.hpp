@@ -112,94 +112,77 @@ namespace ps {
       const auto board = parent_position->board;
       positions.pop_back();
 
+      struct PositionPatch {
+        int row = 0;
+        int col = 0;
+        PositionType type;
+      };
+
+      std::vector<PositionPatch> patches;
       // generate all possible positions
-      for (auto row = 0u; row < board.size(); ++row) {
-        for (auto col = 0u; col < board.front().size(); ++col) {
+      for (auto row = 0; row < (int)board.size(); ++row) {
+        for (auto col = 0; col < (int)board.front().size(); ++col) {
 
           // can move rigth
           if (col < 5 &&
             board[row][col] == PositionType::Peg &&
             board[row][col + 1] == PositionType::Peg &&
             board[row][col + 2] == PositionType::NoPeg) {
-            auto peg_position = std::make_shared<PegPosition>();
-            // Copy original board
-            peg_position->board = board;
             // Execute right move
-            peg_position->board[row][col] = PositionType::NoPeg;
-            peg_position->board[row][col + 1] = PositionType::NoPeg;
-            peg_position->board[row][col + 2] = PositionType::Peg;
-
-            peg_position->parent = parent_position;
-            peg_position->from_row = row;
-            peg_position->from_col = col;
-
-            peg_position->to_row = row;
-            peg_position->to_col = col + 2;
-
-            positions.push_back(peg_position);
+            patches.emplace_back(PositionPatch{ row, col, PositionType::NoPeg });
+            patches.emplace_back(PositionPatch{ row, col + 1, PositionType::NoPeg });
+            patches.emplace_back(PositionPatch{ row, col + 2, PositionType::Peg });
           }
           // can move left
           else if (col > 1 &&
             board[row][col] == PositionType::Peg &&
             board[row][col - 1] == PositionType::Peg &&
             board[row][col - 2] == PositionType::NoPeg) {
-            auto peg_position = std::make_shared<PegPosition>();
-            // Copy original board
-            peg_position->board = board;
             // Execute right move
-            peg_position->board[row][col] = PositionType::NoPeg;
-            peg_position->board[row][col - 1] = PositionType::NoPeg;
-            peg_position->board[row][col - 2] = PositionType::Peg;
-
-            peg_position->parent = parent_position;
-            peg_position->from_row = row;
-            peg_position->from_col = col;
-
-            peg_position->to_row = row;
-            peg_position->to_col = col - 2;
-            positions.push_back(peg_position);
+            patches.emplace_back(PositionPatch{ row, col, PositionType::NoPeg });
+            patches.emplace_back(PositionPatch{ row, col - 1, PositionType::NoPeg });
+            patches.emplace_back(PositionPatch{ row, col - 2, PositionType::Peg });
           }
           // can move down
           else if (row < 5 &&
             board[row][col] == PositionType::Peg &&
             board[row + 1][col] == PositionType::Peg &&
             board[row + 2][col] == PositionType::NoPeg) {
-            auto peg_position = std::make_shared<PegPosition>();
-            // Copy original board
-            peg_position->board = board;
             // Execute right move
-            peg_position->board[row][col] = PositionType::NoPeg;
-            peg_position->board[row + 1][col] = PositionType::NoPeg;
-            peg_position->board[row + 2][col] = PositionType::Peg;
-
-            peg_position->parent = parent_position;
-            peg_position->from_row = row;
-            peg_position->from_col = col;
-
-            peg_position->to_row = row + 2;
-            peg_position->to_col = col;
-            positions.push_back(peg_position);
+            patches.emplace_back(PositionPatch{ row, col, PositionType::NoPeg });
+            patches.emplace_back(PositionPatch{ row + 1, col, PositionType::NoPeg });
+            patches.emplace_back(PositionPatch{ row + 2, col, PositionType::Peg });
           }
           // can move up
           else if (row > 1 &&
             board[row][col] == PositionType::Peg &&
             board[row - 1][col] == PositionType::Peg &&
-            board[row - 2][col] == PositionType::NoPeg) {
+            board[row - 2][col] == PositionType::NoPeg) {            
+            // Execute right move
+            patches.emplace_back(PositionPatch{ row, col, PositionType::NoPeg });
+            patches.emplace_back(PositionPatch{ row - 1, col, PositionType::NoPeg });
+            patches.emplace_back(PositionPatch{ row - 2, col, PositionType::Peg });
+          }
+
+          if (!patches.empty()) {
             auto peg_position = std::make_shared<PegPosition>();
             // Copy original board
             peg_position->board = board;
-            // Execute right move
-            peg_position->board[row][col] = PositionType::NoPeg;
-            peg_position->board[row - 1][col] = PositionType::NoPeg;
-            peg_position->board[row - 2][col] = PositionType::Peg;
-
             peg_position->parent = parent_position;
+
             peg_position->from_row = row;
             peg_position->from_col = col;
 
-            peg_position->to_row = row - 2;
-            peg_position->to_col = col;
+            // Last patch position it where we move peg
+            peg_position->to_row = patches.back().row;
+            peg_position->to_col = patches.back().col;
+
+            for (auto&patch : patches) {
+              peg_position->board[patch.row][patch.col] = patch.type;        
+            }
+
             positions.push_back(peg_position);
+            patches.clear();
           }
         }
       }
@@ -215,7 +198,6 @@ namespace ps {
 
     return results;
   }
-
 
   void print_steps(std::vector<std::shared_ptr<PegPosition>> const& steps) {
     for (auto const& position : steps) {
