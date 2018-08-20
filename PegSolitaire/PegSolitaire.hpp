@@ -3,25 +3,20 @@
 #include <iostream>
 #include <windows.h>
 #include <memory>
+#include <deque>
 
 namespace ps {
-  enum class PositionType
+  enum PositionType
   {
-    Peg, NoPeg, Invalid
+    Inv /*Invalid*/, NoP /*No Peg*/, Peg
   };
 
   using Board = std::vector<std::vector<PositionType>>;
-  int count = 0;
-  struct PegPosition {
-    PegPosition() {
-      ++count;
-    }
-    ~PegPosition() {
-      --count;
-    }
 
+  struct PegPosition {
     Board board;
     std::shared_ptr<PegPosition> parent = nullptr;
+
     int from_row = -1;
     int to_row = -1;
     int from_col = -1;
@@ -41,22 +36,13 @@ namespace ps {
           std::cout << "X";
         }
         else {
-
           auto const cell = board[row][col];
-          switch (cell)
-          {
-          case PositionType::Peg:
+          if (cell == PositionType::Peg)
             std::cout << "·";
-            break;
-          case PositionType::NoPeg:
+          else if (cell == PositionType::NoP)
             std::cout << "o";
-            break;
-          case PositionType::Invalid:
+          else if (cell == PositionType::Inv)
             std::cout << " ";
-            break;
-          default:
-            break;
-          }
         }
       }
       std::cout << "\n";
@@ -68,25 +54,13 @@ namespace ps {
   PegPosition get_english_position() {
     PegPosition peg_position;
 
-    auto insert_line = [&peg_position](std::vector<std::pair<PositionType, int>> const& type_positions) {
-      std::vector<PositionType> line;
-
-      for (auto& type_position : type_positions) {
-        for (int i = 0; i < type_position.second; ++i) {
-          line.push_back(type_position.first);
-        }
-      }
-
-      peg_position.board.emplace_back(std::move(line));
-    };
-
-    insert_line({ {PositionType::Invalid, 2},{ PositionType::Peg, 3 }, { PositionType::Invalid, 2 } });
-    insert_line({ { PositionType::Invalid, 2 },{ PositionType::Peg, 3 },{ PositionType::Invalid, 2 } });
-    insert_line({ { PositionType::Peg, 7 } });
-    insert_line({ { PositionType::Peg, 3 },{ PositionType::NoPeg, 1 },{ PositionType::Peg, 3 } });
-    insert_line({ { PositionType::Peg, 7 } });
-    insert_line({ { PositionType::Invalid, 2 },{ PositionType::Peg, 3 },{ PositionType::Invalid, 2 } });
-    insert_line({ { PositionType::Invalid, 2 },{ PositionType::Peg, 3 },{ PositionType::Invalid, 2 } });
+    peg_position.board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
+    peg_position.board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
+    peg_position.board.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, Peg, Peg, Peg, Peg});
+    peg_position.board.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, NoP, Peg, Peg, Peg});
+    peg_position.board.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, Peg, Peg, Peg, Peg});
+    peg_position.board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
+    peg_position.board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
 
     return peg_position;
   }
@@ -102,7 +76,7 @@ namespace ps {
   }
 
   std::vector<std::shared_ptr<PegPosition>> solve_peg_solitaire(PegPosition const& peg_position) {
-    std::vector<std::shared_ptr<PegPosition>> positions;
+    std::deque<std::shared_ptr<PegPosition>> positions;
     auto start_pos = std::make_shared<PegPosition>();
     start_pos->board = peg_position.board;
     positions.push_back(start_pos);
@@ -127,40 +101,40 @@ namespace ps {
           if (col < 5 &&
             board[row][col] == PositionType::Peg &&
             board[row][col + 1] == PositionType::Peg &&
-            board[row][col + 2] == PositionType::NoPeg) {
+            board[row][col + 2] == PositionType::NoP) {
             // Execute right move
-            patches.emplace_back(PositionPatch{ row, col, PositionType::NoPeg });
-            patches.emplace_back(PositionPatch{ row, col + 1, PositionType::NoPeg });
+            patches.emplace_back(PositionPatch{ row, col, PositionType::NoP });
+            patches.emplace_back(PositionPatch{ row, col + 1, PositionType::NoP });
             patches.emplace_back(PositionPatch{ row, col + 2, PositionType::Peg });
           }
           // can move left
           else if (col > 1 &&
             board[row][col] == PositionType::Peg &&
             board[row][col - 1] == PositionType::Peg &&
-            board[row][col - 2] == PositionType::NoPeg) {
+            board[row][col - 2] == PositionType::NoP) {
             // Execute right move
-            patches.emplace_back(PositionPatch{ row, col, PositionType::NoPeg });
-            patches.emplace_back(PositionPatch{ row, col - 1, PositionType::NoPeg });
+            patches.emplace_back(PositionPatch{ row, col, PositionType::NoP });
+            patches.emplace_back(PositionPatch{ row, col - 1, PositionType::NoP });
             patches.emplace_back(PositionPatch{ row, col - 2, PositionType::Peg });
           }
           // can move down
           else if (row < 5 &&
             board[row][col] == PositionType::Peg &&
             board[row + 1][col] == PositionType::Peg &&
-            board[row + 2][col] == PositionType::NoPeg) {
+            board[row + 2][col] == PositionType::NoP) {
             // Execute right move
-            patches.emplace_back(PositionPatch{ row, col, PositionType::NoPeg });
-            patches.emplace_back(PositionPatch{ row + 1, col, PositionType::NoPeg });
+            patches.emplace_back(PositionPatch{ row, col, PositionType::NoP });
+            patches.emplace_back(PositionPatch{ row + 1, col, PositionType::NoP });
             patches.emplace_back(PositionPatch{ row + 2, col, PositionType::Peg });
           }
           // can move up
           else if (row > 1 &&
             board[row][col] == PositionType::Peg &&
             board[row - 1][col] == PositionType::Peg &&
-            board[row - 2][col] == PositionType::NoPeg) {            
+            board[row - 2][col] == PositionType::NoP) {
             // Execute right move
-            patches.emplace_back(PositionPatch{ row, col, PositionType::NoPeg });
-            patches.emplace_back(PositionPatch{ row - 1, col, PositionType::NoPeg });
+            patches.emplace_back(PositionPatch{ row, col, PositionType::NoP });
+            patches.emplace_back(PositionPatch{ row - 1, col, PositionType::NoP });
             patches.emplace_back(PositionPatch{ row - 2, col, PositionType::Peg });
           }
 
@@ -178,7 +152,7 @@ namespace ps {
             peg_position->to_col = patches.back().col;
 
             for (auto&patch : patches) {
-              peg_position->board[patch.row][patch.col] = patch.type;        
+              peg_position->board[patch.row][patch.col] = patch.type;
             }
 
             positions.push_back(peg_position);
