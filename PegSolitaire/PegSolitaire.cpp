@@ -10,6 +10,8 @@ int main()
 
   ps::print_position(english_position);
 
+  std::cout << "Peg count: " << ps::count_pegs(english_position.board) << "\n";
+
   auto const steps = ps::solve_peg_solitaire(english_position);
 
   ps::print_steps(steps);

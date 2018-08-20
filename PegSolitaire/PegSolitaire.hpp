@@ -9,13 +9,14 @@ namespace ps {
     Peg, NoPeg, Invalid
   };
 
+  using Board = std::vector<std::vector<PositionType>>;
   struct PegPosition {
     //public:
     //  std::vector<PositionType> const& get_board() {
     //    return board;
     //  }
     //private:
-    std::vector<std::vector<PositionType>> board;
+    Board board;
     PegPosition* next = nullptr;
   };
 
@@ -71,14 +72,25 @@ namespace ps {
     return peg_position;
   }
 
+  int count_pegs(Board const& board) {
+    int counter = 0;
+    for (auto& row : board) {
+      for (auto & col : row) {
+        col == PositionType::Peg ? ++counter : 0;
+      }
+    }
+    return counter;
+  }
+
   std::vector<PegPosition> solve_peg_solitaire(PegPosition const& peg_position) {
     std::vector<PegPosition> positions;
     positions.push_back(peg_position);
 
-   // while(!positions.empty() || p)
+    //while(!positions.empty() && count_pe)
 
     return {};
   }
+
 
   void print_steps(std::vector<PegPosition> const& steps) {
 
