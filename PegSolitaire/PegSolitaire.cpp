@@ -10,16 +10,16 @@ int main()
   using namespace std::chrono;
   auto const english_position = ps::get_english_position();
 
-  ps::print_position(english_position);
+  ps::print(english_position);
 
   std::cout << "Peg count: " << english_position.peg_count() << "\n";
 
-  auto  steps = ps::solve_peg_solitaire(english_position);
+  auto  steps = ps::solve(english_position);
 
   auto start = high_resolution_clock::now();
   int loop = 100;
   for (int i = 0; i < loop; ++i)
-    steps = ps::solve_peg_solitaire(english_position);
+    steps = ps::solve(english_position);
   auto end = high_resolution_clock::now();
 
   ps::print_steps(steps);

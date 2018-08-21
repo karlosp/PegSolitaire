@@ -52,7 +52,7 @@ namespace ps {
     int peg_counter = 0;
   };
 
-  void print_position(PegPosition const& position) {
+  void print(PegPosition const& position) {
     SetConsoleOutputCP(65001);
     const auto board = position.get_board();
 
@@ -96,7 +96,7 @@ namespace ps {
     return peg_position;
   }
 
-  std::vector<std::shared_ptr<PegPosition>> solve_peg_solitaire(PegPosition const& peg_position) {
+  std::vector<std::shared_ptr<PegPosition>> solve(PegPosition const& peg_position) {
     std::deque<std::shared_ptr<PegPosition>> positions;
 
     auto start_pos = std::make_shared<PegPosition>();
@@ -203,7 +203,7 @@ namespace ps {
 
   void print_steps(std::vector<std::shared_ptr<PegPosition>> const& steps) {
     for (auto const& position : steps) {
-      print_position(*position.get());
+      print(*position.get());
     }
   }
 }
