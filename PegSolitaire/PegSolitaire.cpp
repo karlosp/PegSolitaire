@@ -17,7 +17,7 @@ int main()
   auto  steps = ps::solve_peg_solitaire(english_position);
 
   auto start = high_resolution_clock::now();
-  int loop = 10;
+  int loop = 100;
   for (int i = 0; i < loop; ++i)
     steps = ps::solve_peg_solitaire(english_position);
   auto end = high_resolution_clock::now();

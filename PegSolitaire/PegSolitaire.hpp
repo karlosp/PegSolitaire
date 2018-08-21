@@ -104,6 +104,7 @@ namespace ps {
     start_pos->set_board(std::move(tmp_board));
     positions.push_back(start_pos);
 
+    std::optional<int> patched_peg_count;
     while (!positions.empty() && (*positions.back()).peg_count() != 1) {
       const auto parent_position = positions.back();
       const auto board = parent_position->get_board();
@@ -180,7 +181,7 @@ namespace ps {
               patched_board[patch.row][patch.col] = patch.type;
             }
 
-            auto patched_peg_count = std::make_optional(parent_position->peg_count() - 1);
+            patched_peg_count.emplace(parent_position->peg_count() - 1);
             peg_position->set_board(std::move(patched_board), patched_peg_count);
             positions.push_back(peg_position);
             patches.clear();
