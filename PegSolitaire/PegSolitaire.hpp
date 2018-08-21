@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <memory>
 #include <deque>
+#include <optional>
 
 namespace ps {
   enum PositionType
@@ -15,14 +16,19 @@ namespace ps {
 
   class PegPosition {
   public:
-    void set_board(Board const& new_board) {
-      board = new_board;
+    void set_board(Board && new_board, std::optional<int> peg_count = std::nullopt) {
+      board = std::move(new_board);
 
-      peg_counter = 0;
-      // Count pegs
-      for (auto& row : board) {
-        for (auto & col : row) {
-          if (col == PositionType::Peg) { ++peg_counter; }
+      if(peg_count){
+        peg_counter = peg_count.value();
+      }
+      else {
+        peg_counter = 0;
+        // Count pegs
+        for (auto& row : board) {
+          for (auto & col : row) {
+            if (col == PositionType::Peg) { ++peg_counter; }
+          }
         }
       }
     }
@@ -85,7 +91,7 @@ namespace ps {
     board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
 
     PegPosition peg_position;
-    peg_position.set_board(board);
+    peg_position.set_board(std::move(board));
 
     return peg_position;
   }
@@ -94,7 +100,8 @@ namespace ps {
     std::deque<std::shared_ptr<PegPosition>> positions;
 
     auto start_pos = std::make_shared<PegPosition>();
-    start_pos->set_board(peg_position.get_board());
+    Board tmp_board = peg_position.get_board();
+    start_pos->set_board(std::move(tmp_board));
     positions.push_back(start_pos);
 
     while (!positions.empty() && (*positions.back()).peg_count() != 1) {
@@ -173,7 +180,8 @@ namespace ps {
               patched_board[patch.row][patch.col] = patch.type;
             }
 
-            peg_position->set_board(patched_board);
+            auto patched_peg_count = std::make_optional(parent_position->peg_count() - 1);
+            peg_position->set_board(std::move(patched_board), patched_peg_count);
             positions.push_back(peg_position);
             patches.clear();
           }
