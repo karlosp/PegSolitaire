@@ -12,7 +12,7 @@ int main()
 
   ps::print_position(english_position);
 
-  std::cout << "Peg count: " << english_position.peg_count << "\n";
+  std::cout << "Peg count: " << english_position.peg_count() << "\n";
 
   auto  steps = ps::solve_peg_solitaire(english_position);
 
@@ -24,6 +24,8 @@ int main()
 
   ps::print_steps(steps);
   std::cout << "Solving took: " << duration_cast<duration<double>>(end - start).count() / loop << " s\n";
+
+  system("pause");
   return 0;
 }
 

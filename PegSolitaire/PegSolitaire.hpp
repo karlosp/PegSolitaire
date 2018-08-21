@@ -13,21 +13,42 @@ namespace ps {
 
   using Board = std::vector<std::vector<PositionType>>;
 
-  struct PegPosition {
-    Board board;
-    std::shared_ptr<PegPosition> parent = nullptr;
+  class PegPosition {
+  public:
+    void set_board(Board const& new_board) {
+      board = new_board;
 
-    int peg_count = 0;
+      peg_counter = 0;
+      // Count pegs
+      for (auto& row : board) {
+        for (auto & col : row) {
+          if (col == PositionType::Peg) { ++peg_counter; }
+        }
+      }
+    }
+
+    Board const& get_board() const {
+      return board;
+    }
+
+    int peg_count() const {
+      return peg_counter;
+    }
+
+    std::shared_ptr<PegPosition> parent = nullptr;
 
     int from_row = -1;
     int to_row = -1;
     int from_col = -1;
     int to_col = -1;
+  private:
+    Board board;
+    int peg_counter = 0;
   };
 
   void print_position(PegPosition const& position) {
     SetConsoleOutputCP(65001);
-    const auto board = position.board;
+    const auto board = position.get_board();
 
     for (auto row = 0u; row < board.size(); ++row) {
       for (auto col = 0u; col < board.front().size(); ++col) {
@@ -53,41 +74,32 @@ namespace ps {
     std::cout << "\n";
   }
 
-  int count_pegs(Board const& board) {
-    int counter = 0;
-    for (auto& row : board) {
-      for (auto & col : row) {
-        col == PositionType::Peg ? ++counter : 0;
-      }
-    }
-    return counter;
-  }
-
   PegPosition get_english_position() {
+    Board board;
+    board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
+    board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
+    board.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, Peg, Peg, Peg, Peg});
+    board.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, NoP, Peg, Peg, Peg});
+    board.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, Peg, Peg, Peg, Peg});
+    board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
+    board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
+
     PegPosition peg_position;
+    peg_position.set_board(board);
 
-    peg_position.board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
-    peg_position.board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
-    peg_position.board.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, Peg, Peg, Peg, Peg});
-    peg_position.board.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, NoP, Peg, Peg, Peg});
-    peg_position.board.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, Peg, Peg, Peg, Peg});
-    peg_position.board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
-    peg_position.board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
-
-    peg_position.peg_count = count_pegs(peg_position.board);
     return peg_position;
   }
 
   std::vector<std::shared_ptr<PegPosition>> solve_peg_solitaire(PegPosition const& peg_position) {
     std::deque<std::shared_ptr<PegPosition>> positions;
+
     auto start_pos = std::make_shared<PegPosition>();
-    start_pos->board = peg_position.board;
-    start_pos->peg_count = peg_position.peg_count;
+    start_pos->set_board(peg_position.get_board());
     positions.push_back(start_pos);
 
-    while (!positions.empty() && (*positions.back()).peg_count != 1) {
+    while (!positions.empty() && (*positions.back()).peg_count() != 1) {
       const auto parent_position = positions.back();
-      const auto board = parent_position->board;
+      const auto board = parent_position->get_board();
       positions.pop_back();
 
       struct PositionPatch {
@@ -144,11 +156,12 @@ namespace ps {
 
           if (!patches.empty()) {
             auto peg_position = std::make_shared<PegPosition>();
-            // Copy original board
-            peg_position->board = board;
-            peg_position->peg_count = parent_position->peg_count - 1;
+
+            Board patched_board = board;
+            
             peg_position->parent = parent_position;
 
+            // Starting peg position
             peg_position->from_row = row;
             peg_position->from_col = col;
 
@@ -157,9 +170,10 @@ namespace ps {
             peg_position->to_col = patches.back().col;
 
             for (auto&patch : patches) {
-              peg_position->board[patch.row][patch.col] = patch.type;
+              patched_board[patch.row][patch.col] = patch.type;
             }
 
+            peg_position->set_board(patched_board);
             positions.push_back(peg_position);
             patches.clear();
           }
