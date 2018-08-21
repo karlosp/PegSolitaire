@@ -23,7 +23,8 @@ int main()
   auto end = high_resolution_clock::now();
 
   ps::print_steps(steps);
-  std::cout << "Solving took: " << duration_cast<duration<double>>(end - start).count() / loop << " s\n";
+  auto duration_ms = duration_cast<duration<double, std::milli>>(end - start).count() / loop;
+  std::cout << "Solving took: " << duration_ms << " ms\n";
 
   system("pause");
   return 0;
