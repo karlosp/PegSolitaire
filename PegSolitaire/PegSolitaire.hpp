@@ -17,6 +17,8 @@ namespace ps {
     Board board;
     std::shared_ptr<PegPosition> parent = nullptr;
 
+    int peg_count = 0;
+
     int from_row = -1;
     int to_row = -1;
     int from_col = -1;
@@ -51,6 +53,16 @@ namespace ps {
     std::cout << "\n";
   }
 
+  int count_pegs(Board const& board) {
+    int counter = 0;
+    for (auto& row : board) {
+      for (auto & col : row) {
+        col == PositionType::Peg ? ++counter : 0;
+      }
+    }
+    return counter;
+  }
+
   PegPosition get_english_position() {
     PegPosition peg_position;
 
@@ -62,26 +74,18 @@ namespace ps {
     peg_position.board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
     peg_position.board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
 
+    peg_position.peg_count = count_pegs(peg_position.board);
     return peg_position;
-  }
-
-  int count_pegs(Board const& board) {
-    int counter = 0;
-    for (auto& row : board) {
-      for (auto & col : row) {
-        col == PositionType::Peg ? ++counter : 0;
-      }
-    }
-    return counter;
   }
 
   std::vector<std::shared_ptr<PegPosition>> solve_peg_solitaire(PegPosition const& peg_position) {
     std::deque<std::shared_ptr<PegPosition>> positions;
     auto start_pos = std::make_shared<PegPosition>();
     start_pos->board = peg_position.board;
+    start_pos->peg_count = peg_position.peg_count;
     positions.push_back(start_pos);
 
-    while (!positions.empty() && count_pegs((*positions.back()).board) != 1) {
+    while (!positions.empty() && (*positions.back()).peg_count != 1) {
       const auto parent_position = positions.back();
       const auto board = parent_position->board;
       positions.pop_back();
@@ -142,6 +146,7 @@ namespace ps {
             auto peg_position = std::make_shared<PegPosition>();
             // Copy original board
             peg_position->board = board;
+            peg_position->peg_count = parent_position->peg_count - 1;
             peg_position->parent = parent_position;
 
             peg_position->from_row = row;
