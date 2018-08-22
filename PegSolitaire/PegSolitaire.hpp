@@ -12,11 +12,11 @@ namespace ps {
     Inv /*Invalid*/, NoP /*No Peg*/, Peg
   };
 
-  using Board = std::vector<std::vector<PositionType>>;
+  using PegPositionContainer = std::vector<std::vector<PositionType>>;
 
-  class PegPosition {
+  class Board {
   public:
-    void set_board(Board && new_board, std::optional<int> peg_count = std::nullopt) {
+    void set_positions(PegPositionContainer && new_board, std::optional<int> peg_count = std::nullopt) {
       board = std::move(new_board);
 
       if(peg_count){
@@ -33,7 +33,7 @@ namespace ps {
       }
     }
 
-    Board const& get_board() const {
+    PegPositionContainer const& get_board() const {
       return board;
     }
 
@@ -41,18 +41,18 @@ namespace ps {
       return peg_counter;
     }
 
-    std::shared_ptr<PegPosition> parent = nullptr;
+    std::shared_ptr<Board> parent = nullptr;
 
     int from_row = -1;
     int to_row = -1;
     int from_col = -1;
     int to_col = -1;
   private:
-    Board board;
+    PegPositionContainer board;
     int peg_counter = 0;
   };
 
-  void print(PegPosition const& position) {
+  void print(Board const& position) {
     SetConsoleOutputCP(65001);
     const auto board = position.get_board();
 
@@ -80,8 +80,8 @@ namespace ps {
     std::cout << "\n";
   }
 
-  PegPosition get_english_position() {
-    Board board;
+  Board get_english_board() {
+    PegPositionContainer board;
     board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
     board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
     board.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, Peg, Peg, Peg, Peg});
@@ -90,18 +90,18 @@ namespace ps {
     board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
     board.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
 
-    PegPosition peg_position;
-    peg_position.set_board(std::move(board));
+    Board peg_position;
+    peg_position.set_positions(std::move(board));
 
     return peg_position;
   }
 
-  std::vector<std::shared_ptr<PegPosition>> solve(PegPosition const& peg_position) {
-    std::deque<std::shared_ptr<PegPosition>> positions;
+  std::vector<std::shared_ptr<Board>> solve(Board const& peg_position) {
+    std::deque<std::shared_ptr<Board>> positions;
 
-    auto start_pos = std::make_shared<PegPosition>();
-    Board tmp_board = peg_position.get_board();
-    start_pos->set_board(std::move(tmp_board));
+    auto start_pos = std::make_shared<Board>();
+    PegPositionContainer tmp_board = peg_position.get_board();
+    start_pos->set_positions(std::move(tmp_board));
     positions.push_back(start_pos);
 
     std::optional<int> patched_peg_count;
@@ -163,9 +163,9 @@ namespace ps {
           }
 
           if (!patches.empty()) {
-            auto peg_position = std::make_shared<PegPosition>();
+            auto peg_position = std::make_shared<Board>();
 
-            Board patched_board = board;
+            PegPositionContainer patched_board = board;
             
             peg_position->parent = parent_position;
 
@@ -182,7 +182,7 @@ namespace ps {
             }
 
             patched_peg_count.emplace(parent_position->peg_count() - 1);
-            peg_position->set_board(std::move(patched_board), patched_peg_count);
+            peg_position->set_positions(std::move(patched_board), patched_peg_count);
             positions.push_back(peg_position);
             patches.clear();
           }
@@ -190,7 +190,7 @@ namespace ps {
       }
     }
 
-    std::vector<std::shared_ptr<PegPosition>> results;
+    std::vector<std::shared_ptr<Board>> results;
     auto current_position = *positions.rbegin();
 
     while (current_position->parent) {
@@ -201,7 +201,7 @@ namespace ps {
     return results;
   }
 
-  void print_steps(std::vector<std::shared_ptr<PegPosition>> const& steps) {
+  void print_steps(std::vector<std::shared_ptr<Board>> const& steps) {
     for (auto const& position : steps) {
       print(*position.get());
     }
