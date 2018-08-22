@@ -12,7 +12,7 @@ int main()
 
   ps::print(english_board);
 
-  std::cout << "Peg count: " << english_board.peg_count() << "\n";
+  
 
   auto  steps = ps::solve(english_board);
 
