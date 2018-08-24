@@ -40,21 +40,9 @@ namespace ps {
 
   class Board {
   public:
-    void set_positions(PegPositionContainer && new_positions, std::optional<int> peg_count = std::nullopt) {
+    void set_positions(PegPositionContainer && new_positions, int peg_count) {
       positions_ = std::move(new_positions);
-
-      if (peg_count) {
-        peg_counter_ = peg_count.value();
-      }
-      else {
-        peg_counter_ = 0;
-        // Count pegs
-        for (auto& row : positions_) {
-          for (auto & col : row) {
-            if (col == PositionType::Peg) { ++peg_counter_; }
-          }
-        }
-      }
+        peg_counter_ = peg_count;
     }
 
     PegPositionContainer const& get_positions() const {
@@ -139,7 +127,7 @@ namespace ps {
     positions.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
 
     auto board = std::make_shared<Board>();
-    board->set_positions(std::move(positions));
+    board->set_positions(std::move(positions), 32);
 
     return board;
   }
