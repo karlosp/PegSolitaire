@@ -42,7 +42,7 @@ namespace ps {
   public:
     void set_positions(PegPositionContainer && new_positions, int peg_count) {
       positions_ = std::move(new_positions);
-        peg_counter_ = peg_count;
+      peg_counter_ = peg_count;
     }
 
     PegPositionContainer const& get_positions() const {
@@ -152,8 +152,9 @@ namespace ps {
             board[row][col + 1] == PositionType::Peg &&
             board[row][col + 2] == PositionType::NoP) {
             // Execute right move
-            move_from_parent = std::make_optional<MoveFromParent>(PositionPatch{ row, col, PositionType::NoP },
+            move_from_parent = std::make_optional<MoveFromParent>(
               PositionPatch{ row, col, PositionType::NoP },
+              PositionPatch{ row, col + 1, PositionType::NoP },
               PositionPatch{ row, col + 2, PositionType::Peg });
           }
           // can move left
@@ -162,8 +163,9 @@ namespace ps {
             board[row][col - 1] == PositionType::Peg &&
             board[row][col - 2] == PositionType::NoP) {
             // Execute right move
-            move_from_parent = std::make_optional<MoveFromParent>(PositionPatch{ row, col, PositionType::NoP }, 
-              PositionPatch{ row, col - 1, PositionType::NoP }, 
+            move_from_parent = std::make_optional<MoveFromParent>(
+              PositionPatch{ row, col, PositionType::NoP },
+              PositionPatch{ row, col - 1, PositionType::NoP },
               PositionPatch{ row, col - 2, PositionType::Peg });
           }
           // can move down
@@ -172,7 +174,8 @@ namespace ps {
             board[row + 1][col] == PositionType::Peg &&
             board[row + 2][col] == PositionType::NoP) {
             // Execute right move
-            move_from_parent = std::make_optional<MoveFromParent>(PositionPatch{ row, col, PositionType::NoP }, 
+            move_from_parent = std::make_optional<MoveFromParent>(
+              PositionPatch{ row, col, PositionType::NoP },
               PositionPatch{ row + 1, col, PositionType::NoP },
               PositionPatch{ row + 2, col, PositionType::Peg });
           }
@@ -182,8 +185,8 @@ namespace ps {
             board[row - 1][col] == PositionType::Peg &&
             board[row - 2][col] == PositionType::NoP) {
             // Execute right move
-            move_from_parent = std::make_optional<MoveFromParent>(PositionPatch{ row, col, PositionType::NoP }, 
-              PositionPatch{ row - 1, col, PositionType::NoP }, 
+            move_from_parent = std::make_optional<MoveFromParent>(PositionPatch{ row, col, PositionType::NoP },
+              PositionPatch{ row - 1, col, PositionType::NoP },
               PositionPatch{ row - 2, col, PositionType::Peg });
           }
 
@@ -210,7 +213,7 @@ namespace ps {
       current_position = current_position->get_parent();
     }
 
-    //std::reverse(results.begin(), results.end());
+    std::reverse(results.begin(), results.end());
 
     return results;
   }
