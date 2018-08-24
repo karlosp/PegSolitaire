@@ -1,7 +1,6 @@
-// PegSolitaire.cpp : Defines the entry point for the console application.
-//
-
+// clang-format off
 #include "stdafx.h"
+// clang-format on 
 #include "PegSolitaire.hpp"
 #include <chrono>
 
@@ -10,13 +9,14 @@ int main()
   using namespace std::chrono;
   auto const english_board = ps::get_english_board();
 
-  english_board->print();  
+  english_board->print();
 
-  auto  steps = ps::solve(english_board);
+  auto steps = ps::solve(english_board);
 
   auto start = high_resolution_clock::now();
   int loop = 100;
-  for (int i = 0; i < loop; ++i) {
+  for(int i = 0; i < loop; ++i)
+  {
     steps = ps::solve(english_board);
   }
   auto end = high_resolution_clock::now();
@@ -28,4 +28,3 @@ int main()
   system("pause");
   return 0;
 }
-
