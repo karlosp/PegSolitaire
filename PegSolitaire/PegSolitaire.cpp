@@ -10,16 +10,15 @@ int main()
   using namespace std::chrono;
   auto const english_board = ps::get_english_board();
 
-  ps::print(english_board);
-
-  
+  english_board->print();  
 
   auto  steps = ps::solve(english_board);
 
   auto start = high_resolution_clock::now();
-  int loop = 100;
-  for (int i = 0; i < loop; ++i)
+  int loop = 10000;
+  for (int i = 0; i < loop; ++i) {
     steps = ps::solve(english_board);
+  }
   auto end = high_resolution_clock::now();
 
   ps::print_steps(steps);
