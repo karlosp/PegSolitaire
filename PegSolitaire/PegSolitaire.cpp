@@ -13,7 +13,7 @@ int main()
 
   auto steps = ps::solve(english_board);
 
-  auto start = high_resolution_clock::now();
+  auto const start = high_resolution_clock::now();
   int loop = 100;
   for(int i = 0; i < loop; ++i)
   {

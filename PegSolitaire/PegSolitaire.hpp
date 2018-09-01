@@ -5,6 +5,7 @@
 #include <optional>
 #include <vector>
 #include <windows.h>
+#include <chrono>
 
 namespace
 {
@@ -117,7 +118,7 @@ class Board
         {
           auto const cell = positions_[row][col];
           if(cell == PositionType::Peg)
-            std::cout << "·";
+            std::cout << ".";
           else if(cell == PositionType::NoP)
             std::cout << "o";
           else if(cell == PositionType::Inv)
@@ -160,10 +161,16 @@ std::shared_ptr<Board> get_english_board()
 
 std::vector<std::shared_ptr<Board>> solve(std::shared_ptr<Board> const board)
 {
+  using namespace std::chrono;
+  std::cout.imbue(std::locale(""));
+  long long counter{ 0 };
   std::deque<std::shared_ptr<Board>> positions {board};
+  std::deque<std::shared_ptr<Board>> solutions;
 
   std::optional<int> patched_peg_count;
-  while(!positions.empty() && (*positions.back()).peg_count() != 1)
+  /*auto start = high_resolution_clock::now();*/
+  //const auto beggining = start;
+  while(!positions.empty() && solutions.empty())
   {
     const auto parent_position = positions.back();
     const auto board = parent_position->get_positions();
@@ -220,25 +227,47 @@ std::vector<std::shared_ptr<Board>> solve(std::shared_ptr<Board> const board)
         {
           auto peg_position = std::make_shared<Board>();
           peg_position->set_parent(parent_position, move_from_parent.value());
-          positions.push_back(peg_position);
+          
+          
+          if (peg_position->peg_count() == 1) {
+            solutions.push_back(std::move(peg_position));
+          }
+          else {
+            positions.push_back(peg_position);
+          }
+
           // Reset move_from_parent
           move_from_parent = std::nullopt;
+          ++counter;
         }
+
+        /*auto const now = high_resolution_clock::now();
+        if ((now - start) > std::chrono::seconds(2)) {
+          start = now;
+          std::cout << "Lapsed: " << duration_cast<seconds>(now - beggining).count() << " s\n";
+          std::cout << "Positions counter " << positions.size() << "\n";
+          std::cout << "Last position pegs count " << positions.back()->peg_count() << "\n";
+          std::cout << "Moves counter " << counter << " \n";
+          std::cout << "Solutions size: " << solutions.size() << " \n\n";
+        }*/
       }
     }
   }
 
   std::vector<std::shared_ptr<Board>> results;
-  auto current_position = positions.back();
 
-  while(current_position->get_parent())
-  {
-    results.push_back(current_position);
-    current_position = current_position->get_parent();
+  if (!solutions.empty()) {
+    auto current_position = solutions.back();
+
+    while (current_position->get_parent())
+    {
+      results.push_back(current_position);
+      current_position = current_position->get_parent();
+    }
   }
-
   std::reverse(results.begin(), results.end());
-
+  std::cout << "counter " << counter << "\n";
+  std::cout << "solutions size: " << solutions.size() << "\n";
   return results;
 }
 
