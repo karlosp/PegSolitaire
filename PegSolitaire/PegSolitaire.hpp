@@ -1,11 +1,13 @@
 #pragma once
+#include <chrono>
 #include <deque>
 #include <iostream>
 #include <memory>
 #include <optional>
 #include <vector>
 #include <windows.h>
-#include <chrono>
+
+//#define ENABLE_TIME TRUE;
 
 namespace
 {
@@ -97,7 +99,7 @@ class Board
     return parent_;
   }
 
-  void print()
+  void print() const
   {
     SetConsoleOutputCP(65001);
     std::cout << "~~~~~~~~~~~~~~~\n\n";
@@ -142,34 +144,40 @@ class Board
   int to_col = -1;
 };
 
-std::shared_ptr<Board> get_english_board()
+Board get_english_board()
 {
   PegPositionContainer positions;
-  positions.emplace_back(std::vector<PositionType> {Inv, Inv, Peg, Peg, Peg, Inv, Inv});
-  positions.emplace_back(std::vector<PositionType> {Inv, Inv, Peg, Peg, Peg, Inv, Inv});
-  positions.emplace_back(std::vector<PositionType> {Peg, Peg, Peg, Peg, Peg, Peg, Peg});
-  positions.emplace_back(std::vector<PositionType> {Peg, Peg, Peg, NoP, Peg, Peg, Peg});
-  positions.emplace_back(std::vector<PositionType> {Peg, Peg, Peg, Peg, Peg, Peg, Peg});
-  positions.emplace_back(std::vector<PositionType> {Inv, Inv, Peg, Peg, Peg, Inv, Inv});
-  positions.emplace_back(std::vector<PositionType> {Inv, Inv, Peg, Peg, Peg, Inv, Inv});
+  positions.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
+  positions.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
+  positions.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, Peg, Peg, Peg, Peg});
+  positions.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, NoP, Peg, Peg, Peg});
+  positions.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, Peg, Peg, Peg, Peg});
+  positions.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
+  positions.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
 
-  auto board = std::make_shared<Board>();
-  board->set_positions(std::move(positions), 32);
+  Board board;
+  board.set_positions(std::move(positions), 32);
 
   return board;
 }
 
-std::vector<std::shared_ptr<Board>> solve(std::shared_ptr<Board> const board)
+std::vector<std::shared_ptr<Board>> solve(Board const& board)
 {
   using namespace std::chrono;
   std::cout.imbue(std::locale(""));
-  long long counter{ 0 };
-  std::deque<std::shared_ptr<Board>> positions {board};
+  long long counter{0};
+  auto start_board = std::make_shared<Board>();
+  *start_board = board;
+  std::deque<std::shared_ptr<Board>> positions{start_board};
   std::deque<std::shared_ptr<Board>> solutions;
 
   std::optional<int> patched_peg_count;
-  /*auto start = high_resolution_clock::now();*/
-  //const auto beggining = start;
+
+#ifdef ENABLE_TIME
+  auto start = high_resolution_clock::now();
+  const auto beggining = start;
+#endif // ENABLE_TIME
+
   while(!positions.empty() && solutions.empty())
   {
     const auto parent_position = positions.back();
@@ -188,9 +196,9 @@ std::vector<std::shared_ptr<Board>> solve(std::shared_ptr<Board> const board)
            board[row][col + 1] == PositionType::Peg && board[row][col + 2] == PositionType::NoP)
         {
           move_from_parent =
-              std::make_optional<MoveFromParent>(PositionPatch {row, col, PositionType::NoP},
-                                                 PositionPatch {row, col + 1, PositionType::NoP},
-                                                 PositionPatch {row, col + 2, PositionType::Peg});
+              std::make_optional<MoveFromParent>(PositionPatch{row, col, PositionType::NoP},
+                                                 PositionPatch{row, col + 1, PositionType::NoP},
+                                                 PositionPatch{row, col + 2, PositionType::Peg});
         }
         // can move left
         else if(col > 1 && board[row][col] == PositionType::Peg &&
@@ -198,9 +206,9 @@ std::vector<std::shared_ptr<Board>> solve(std::shared_ptr<Board> const board)
                 board[row][col - 2] == PositionType::NoP)
         {
           move_from_parent =
-              std::make_optional<MoveFromParent>(PositionPatch {row, col, PositionType::NoP},
-                                                 PositionPatch {row, col - 1, PositionType::NoP},
-                                                 PositionPatch {row, col - 2, PositionType::Peg});
+              std::make_optional<MoveFromParent>(PositionPatch{row, col, PositionType::NoP},
+                                                 PositionPatch{row, col - 1, PositionType::NoP},
+                                                 PositionPatch{row, col - 2, PositionType::Peg});
         }
         // can move down
         else if(row < 5 && board[row][col] == PositionType::Peg &&
@@ -208,9 +216,9 @@ std::vector<std::shared_ptr<Board>> solve(std::shared_ptr<Board> const board)
                 board[row + 2][col] == PositionType::NoP)
         {
           move_from_parent =
-              std::make_optional<MoveFromParent>(PositionPatch {row, col, PositionType::NoP},
-                                                 PositionPatch {row + 1, col, PositionType::NoP},
-                                                 PositionPatch {row + 2, col, PositionType::Peg});
+              std::make_optional<MoveFromParent>(PositionPatch{row, col, PositionType::NoP},
+                                                 PositionPatch{row + 1, col, PositionType::NoP},
+                                                 PositionPatch{row + 2, col, PositionType::Peg});
         }
         // can move up
         else if(row > 1 && board[row][col] == PositionType::Peg &&
@@ -218,21 +226,22 @@ std::vector<std::shared_ptr<Board>> solve(std::shared_ptr<Board> const board)
                 board[row - 2][col] == PositionType::NoP)
         {
           move_from_parent =
-              std::make_optional<MoveFromParent>(PositionPatch {row, col, PositionType::NoP},
-                                                 PositionPatch {row - 1, col, PositionType::NoP},
-                                                 PositionPatch {row - 2, col, PositionType::Peg});
+              std::make_optional<MoveFromParent>(PositionPatch{row, col, PositionType::NoP},
+                                                 PositionPatch{row - 1, col, PositionType::NoP},
+                                                 PositionPatch{row - 2, col, PositionType::Peg});
         }
 
         if(move_from_parent)
         {
           auto peg_position = std::make_shared<Board>();
           peg_position->set_parent(parent_position, move_from_parent.value());
-          
-          
-          if (peg_position->peg_count() == 1) {
+
+          if(peg_position->peg_count() == 1)
+          {
             solutions.push_back(std::move(peg_position));
           }
-          else {
+          else
+          {
             positions.push_back(peg_position);
           }
 
@@ -240,26 +249,30 @@ std::vector<std::shared_ptr<Board>> solve(std::shared_ptr<Board> const board)
           move_from_parent = std::nullopt;
           ++counter;
         }
-
-        /*auto const now = high_resolution_clock::now();
-        if ((now - start) > std::chrono::seconds(2)) {
-          start = now;
-          std::cout << "Lapsed: " << duration_cast<seconds>(now - beggining).count() << " s\n";
-          std::cout << "Positions counter " << positions.size() << "\n";
-          std::cout << "Last position pegs count " << positions.back()->peg_count() << "\n";
-          std::cout << "Moves counter " << counter << " \n";
-          std::cout << "Solutions size: " << solutions.size() << " \n\n";
-        }*/
       }
     }
+
+#ifdef ENABLE_TIME
+    auto const now = high_resolution_clock::now();
+    if((now - start) > std::chrono::seconds(2))
+    {
+      start = now;
+      std::cout << "Lapsed: " << duration_cast<seconds>(now - beggining).count() << " s\n";
+      std::cout << "Positions counter " << positions.size() << "\n";
+      std::cout << "Last position pegs count " << positions.back()->peg_count() << "\n";
+      std::cout << "Moves counter " << counter << " \n";
+      std::cout << "Solutions size: " << solutions.size() << " \n\n";
+    }
+#endif
   }
 
   std::vector<std::shared_ptr<Board>> results;
 
-  if (!solutions.empty()) {
+  if(!solutions.empty())
+  {
     auto current_position = solutions.back();
 
-    while (current_position->get_parent())
+    while(current_position->get_parent())
     {
       results.push_back(current_position);
       current_position = current_position->get_parent();
