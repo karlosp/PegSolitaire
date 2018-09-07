@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <chrono>
 #include <deque>
 #include <iostream>
@@ -50,7 +51,7 @@ class MoveFromParent
 namespace ps
 {
 
-using PegPositionContainer = std::vector<std::vector<PositionType>>;
+using PegPositionContainer = std::array<std::array<PositionType, 7>, 7>;
 
 class Board
 {
@@ -76,7 +77,6 @@ class Board
     parent_ = parent;
 
     PegPositionContainer patched_board = parent->get_positions();
-    ;
 
     for(auto& patch : move_from_parent.get_move())
     {
@@ -146,14 +146,14 @@ class Board
 
 Board get_english_board()
 {
-  PegPositionContainer positions;
-  positions.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
-  positions.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
-  positions.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, Peg, Peg, Peg, Peg});
-  positions.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, NoP, Peg, Peg, Peg});
-  positions.emplace_back(std::vector<PositionType>{Peg, Peg, Peg, Peg, Peg, Peg, Peg});
-  positions.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
-  positions.emplace_back(std::vector<PositionType>{Inv, Inv, Peg, Peg, Peg, Inv, Inv});
+  PegPositionContainer positions{
+      std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
+      std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
+      std::array<PositionType, 7>{Peg, Peg, Peg, Peg, Peg, Peg, Peg},
+      std::array<PositionType, 7>{Peg, Peg, Peg, NoP, Peg, Peg, Peg},
+      std::array<PositionType, 7>{Peg, Peg, Peg, Peg, Peg, Peg, Peg},
+      std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
+      std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv}};
 
   Board board;
   board.set_positions(std::move(positions), 32);
@@ -178,7 +178,13 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
   const auto beggining = start;
 #endif // ENABLE_TIME
 
-  while(!positions.empty() && solutions.empty())
+  while(!positions.empty() &&
+#ifdef ENABLE_TIME
+        solutions.size() != 1072778
+#else
+        solutions.empty()
+#endif
+  )
   {
     const auto parent_position = positions.back();
     const auto board = parent_position->get_positions();
@@ -265,6 +271,11 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
     }
 #endif
   }
+#ifdef ENABLE_TIME
+  auto const now = high_resolution_clock::now();
+  std::cout << "Lapsed time for all solutions: " << duration_cast<seconds>(now - start).count()
+            << " s\n";
+#endif
 
   std::vector<std::shared_ptr<Board>> results;
 
