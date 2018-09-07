@@ -2,9 +2,12 @@
 #include <array>
 #include <chrono>
 #include <deque>
+#include <future>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <optional>
+#include <thread>
 #include <vector>
 #include <windows.h>
 
@@ -12,7 +15,7 @@
 
 namespace
 {
-enum PositionType
+enum PositionType : char
 {
   Inv /*Invalid*/,
   NoP /*No Peg*/,
@@ -177,101 +180,158 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
   const auto beggining = start;
 #endif // ENABLE_TIME
 
-  std::vector<MoveFromParent> moves_from_parent;
-  moves_from_parent.reserve(16);
+  std::mutex mutex;
 
-  while(!positions.empty() &&
+  auto run = [&counter,
+              &positions,
+              &solutions,
+              &mutex
 #ifdef ENABLE_TIME
-        solutions.size() != 1072778
+              ,
+              &start,
+              &beggining
+#endif
+  ]() {
+    std::cout << "Starting id " << std::this_thread::get_id()
+              << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+    std::vector<MoveFromParent> moves_from_parent;
+    moves_from_parent.reserve(16);
+
+    std::unique_lock<std::mutex> guard(mutex);
+    guard.unlock();
+
+    while(true)
+    {
+      guard.lock();
+      if(positions.empty())
+      {
+        guard.unlock();
+        std::cout << "Sleeping id " << std::this_thread::get_id() << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        continue;
+      }
+      
+      if(
+#ifdef ENABLE_TIME
+          solutions.size() == 1072778
 #else
-        solutions.empty()
+          !solutions.empty()
 #endif
-  )
-  {
-    const auto parent_position = positions.back();
-    const auto board = parent_position->get_positions();
-    positions.pop_back();
-
-    // generate all possible positions
-    for(auto row = 0; row < (int)board.size(); ++row)
-    {
-      for(auto col = 0; col < (int)board.front().size(); ++col)
+      )
       {
-
-        // can move rigth
-        if(col < 5 && board[row][col] == PositionType::Peg &&
-           board[row][col + 1] == PositionType::Peg && board[row][col + 2] == PositionType::NoP)
-        {
-          moves_from_parent.emplace_back(
-              MoveFromParent(PositionPatch{row, col, PositionType::NoP},
-                             PositionPatch{row, col + 1, PositionType::NoP},
-                             PositionPatch{row, col + 2, PositionType::Peg}));
-        }
-        // can move left
-        else if(col > 1 && board[row][col] == PositionType::Peg &&
-                board[row][col - 1] == PositionType::Peg &&
-                board[row][col - 2] == PositionType::NoP)
-        {
-          moves_from_parent.emplace_back(
-              MoveFromParent(PositionPatch{row, col, PositionType::NoP},
-                             PositionPatch{row, col - 1, PositionType::NoP},
-                             PositionPatch{row, col - 2, PositionType::Peg}));
-        }
-        // can move down
-        else if(row < 5 && board[row][col] == PositionType::Peg &&
-                board[row + 1][col] == PositionType::Peg &&
-                board[row + 2][col] == PositionType::NoP)
-        {
-          moves_from_parent.emplace_back(
-              MoveFromParent(PositionPatch{row, col, PositionType::NoP},
-                             PositionPatch{row + 1, col, PositionType::NoP},
-                             PositionPatch{row + 2, col, PositionType::Peg}));
-        }
-        // can move up
-        else if(row > 1 && board[row][col] == PositionType::Peg &&
-                board[row - 1][col] == PositionType::Peg &&
-                board[row - 2][col] == PositionType::NoP)
-        {
-          moves_from_parent.emplace_back(
-              MoveFromParent(PositionPatch{row, col, PositionType::NoP},
-                             PositionPatch{row - 1, col, PositionType::NoP},
-                             PositionPatch{row - 2, col, PositionType::Peg}));
-        }
-      }//for
-    }//for
-
-            //if(move_from_parent)
-    for(auto const& move_from_parent : moves_from_parent)
-    {
-      auto peg_position = std::make_shared<Board>();
-      peg_position->set_parent(parent_position, move_from_parent);
-
-      if(peg_position->peg_count() == 1)
-      {
-        solutions.push_back(std::move(peg_position));
+        guard.unlock();
+        break;
       }
-      else
-      {
-        positions.push_back(peg_position);
-      }
-      ++counter;
-    }
+      const auto parent_position = positions.back();
+      const auto board = parent_position->get_positions();
+      positions.pop_back();
+      /*std::cout << "Id " << std::this_thread::get_id() << "has " << positions.size()
+                << " positions \n";*/
+      guard.unlock();
+      //std::this_thread::sleep_for(std::chrono::seconds(10));
 
-    moves_from_parent.clear();
+      // generate all possible positions
+      for(auto row = 0; row < (int)board.size(); ++row)
+      {
+        for(auto col = 0; col < (int)board.front().size(); ++col)
+        {
+
+          // can move rigth
+          if(col < 5 && board[row][col] == PositionType::Peg &&
+             board[row][col + 1] == PositionType::Peg && board[row][col + 2] == PositionType::NoP)
+          {
+            moves_from_parent.emplace_back(
+                MoveFromParent(PositionPatch{row, col, PositionType::NoP},
+                               PositionPatch{row, col + 1, PositionType::NoP},
+                               PositionPatch{row, col + 2, PositionType::Peg}));
+          }
+          // can move left
+          else if(col > 1 && board[row][col] == PositionType::Peg &&
+             board[row][col - 1] == PositionType::Peg && board[row][col - 2] == PositionType::NoP)
+          {
+            moves_from_parent.emplace_back(
+                MoveFromParent(PositionPatch{row, col, PositionType::NoP},
+                               PositionPatch{row, col - 1, PositionType::NoP},
+                               PositionPatch{row, col - 2, PositionType::Peg}));
+          }
+          // can move down
+          else if(row < 5 && board[row][col] == PositionType::Peg &&
+             board[row + 1][col] == PositionType::Peg && board[row + 2][col] == PositionType::NoP)
+          {
+            moves_from_parent.emplace_back(
+                MoveFromParent(PositionPatch{row, col, PositionType::NoP},
+                               PositionPatch{row + 1, col, PositionType::NoP},
+                               PositionPatch{row + 2, col, PositionType::Peg}));
+          }
+          // can move up
+          else if(row > 1 && board[row][col] == PositionType::Peg &&
+             board[row - 1][col] == PositionType::Peg && board[row - 2][col] == PositionType::NoP)
+          {
+            moves_from_parent.emplace_back(
+                MoveFromParent(PositionPatch{row, col, PositionType::NoP},
+                               PositionPatch{row - 1, col, PositionType::NoP},
+                               PositionPatch{row - 2, col, PositionType::Peg}));
+          }
+        } //for
+      } //for
+
+      //if(move_from_parent)
+      guard.lock();
+      for(auto const& move_from_parent : moves_from_parent)
+      {
+        auto peg_position = std::make_shared<Board>();
+        peg_position->set_parent(parent_position, move_from_parent);
+
+        if(peg_position->peg_count() == 1)
+        {
+          solutions.push_back(std::move(peg_position));
+        }
+        else
+        {
+          positions.push_back(peg_position);
+        }
+        ++counter;
+      }
+      guard.unlock();
+
+      //if(!moves_from_parent.empty())
+      //{
+      //  std::cout << "Id " << std::this_thread::get_id() << " added " << moves_from_parent.size()
+      //          << " positions \n";
+      //}
+
+      moves_from_parent.clear();
 
 #ifdef ENABLE_TIME
-    auto const now = high_resolution_clock::now();
-    if((now - start) > std::chrono::seconds(2))
-    {
-      start = now;
-      std::cout << "Lapsed: " << duration_cast<seconds>(now - beggining).count() << " s\n";
-      std::cout << "Positions counter " << positions.size() << "\n";
-      std::cout << "Last position pegs count " << positions.back()->peg_count() << "\n";
-      std::cout << "Moves counter " << counter << " \n";
-      std::cout << "Solutions size: " << solutions.size() << " \n\n";
-    }
+      auto const now = high_resolution_clock::now();
+      if((now - start) > std::chrono::seconds(2))
+      {
+        start = now;
+        std::cout << "Lapsed: " << duration_cast<seconds>(now - beggining).count() << " s\n";
+        std::cout << "Positions counter " << positions.size() << "\n";
+        std::cout << "Last position pegs count " << positions.back()->peg_count() << "\n";
+        std::cout << "Moves counter " << counter << " \n";
+        std::cout << "Solutions size: " << solutions.size() << " \n\n";
+      }
 #endif
+    } //while
+  };
+
+  std::vector<std::future<void>> workers;
+  workers.push_back(std::move(std::async(std::launch::async, run)));
+#ifdef ENABLE_TIME
+  workers.push_back(std::move(std::async(std::launch::async, run)));
+  workers.push_back(std::move(std::async(std::launch::async, run)));
+  workers.push_back(std::move(std::async(std::launch::async, run))); 
+  workers.push_back(std::move(std::async(std::launch::async, run)));
+  workers.push_back(std::move(std::async(std::launch::async, run)));
+  workers.push_back(std::move(std::async(std::launch::async, run)));
+#endif
+  for(auto& worker : workers)
+  {
+    worker.get();
   }
+
 #ifdef ENABLE_TIME
   auto const now = high_resolution_clock::now();
   std::cout << "Lapsed time for all solutions: " << duration_cast<seconds>(now - start).count()
