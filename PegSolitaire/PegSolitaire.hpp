@@ -146,14 +146,13 @@ class Board
 
 Board get_english_board()
 {
-  PegPositionContainer positions{
-      std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
-      std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
-      std::array<PositionType, 7>{Peg, Peg, Peg, Peg, Peg, Peg, Peg},
-      std::array<PositionType, 7>{Peg, Peg, Peg, NoP, Peg, Peg, Peg},
-      std::array<PositionType, 7>{Peg, Peg, Peg, Peg, Peg, Peg, Peg},
-      std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
-      std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv}};
+  PegPositionContainer positions{std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
+                                 std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
+                                 std::array<PositionType, 7>{Peg, Peg, Peg, Peg, Peg, Peg, Peg},
+                                 std::array<PositionType, 7>{Peg, Peg, Peg, NoP, Peg, Peg, Peg},
+                                 std::array<PositionType, 7>{Peg, Peg, Peg, Peg, Peg, Peg, Peg},
+                                 std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
+                                 std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv}};
 
   Board board;
   board.set_positions(std::move(positions), 32);
@@ -178,6 +177,9 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
   const auto beggining = start;
 #endif // ENABLE_TIME
 
+  std::vector<MoveFromParent> moves_from_parent;
+  moves_from_parent.reserve(16);
+
   while(!positions.empty() &&
 #ifdef ENABLE_TIME
         solutions.size() != 1072778
@@ -190,7 +192,6 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
     const auto board = parent_position->get_positions();
     positions.pop_back();
 
-    std::optional<MoveFromParent> move_from_parent = std::nullopt;
     // generate all possible positions
     for(auto row = 0; row < (int)board.size(); ++row)
     {
@@ -201,62 +202,62 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
         if(col < 5 && board[row][col] == PositionType::Peg &&
            board[row][col + 1] == PositionType::Peg && board[row][col + 2] == PositionType::NoP)
         {
-          move_from_parent =
-              std::make_optional<MoveFromParent>(PositionPatch{row, col, PositionType::NoP},
-                                                 PositionPatch{row, col + 1, PositionType::NoP},
-                                                 PositionPatch{row, col + 2, PositionType::Peg});
+          moves_from_parent.emplace_back(
+              MoveFromParent(PositionPatch{row, col, PositionType::NoP},
+                             PositionPatch{row, col + 1, PositionType::NoP},
+                             PositionPatch{row, col + 2, PositionType::Peg}));
         }
         // can move left
         else if(col > 1 && board[row][col] == PositionType::Peg &&
                 board[row][col - 1] == PositionType::Peg &&
                 board[row][col - 2] == PositionType::NoP)
         {
-          move_from_parent =
-              std::make_optional<MoveFromParent>(PositionPatch{row, col, PositionType::NoP},
-                                                 PositionPatch{row, col - 1, PositionType::NoP},
-                                                 PositionPatch{row, col - 2, PositionType::Peg});
+          moves_from_parent.emplace_back(
+              MoveFromParent(PositionPatch{row, col, PositionType::NoP},
+                             PositionPatch{row, col - 1, PositionType::NoP},
+                             PositionPatch{row, col - 2, PositionType::Peg}));
         }
         // can move down
         else if(row < 5 && board[row][col] == PositionType::Peg &&
                 board[row + 1][col] == PositionType::Peg &&
                 board[row + 2][col] == PositionType::NoP)
         {
-          move_from_parent =
-              std::make_optional<MoveFromParent>(PositionPatch{row, col, PositionType::NoP},
-                                                 PositionPatch{row + 1, col, PositionType::NoP},
-                                                 PositionPatch{row + 2, col, PositionType::Peg});
+          moves_from_parent.emplace_back(
+              MoveFromParent(PositionPatch{row, col, PositionType::NoP},
+                             PositionPatch{row + 1, col, PositionType::NoP},
+                             PositionPatch{row + 2, col, PositionType::Peg}));
         }
         // can move up
         else if(row > 1 && board[row][col] == PositionType::Peg &&
                 board[row - 1][col] == PositionType::Peg &&
                 board[row - 2][col] == PositionType::NoP)
         {
-          move_from_parent =
-              std::make_optional<MoveFromParent>(PositionPatch{row, col, PositionType::NoP},
-                                                 PositionPatch{row - 1, col, PositionType::NoP},
-                                                 PositionPatch{row - 2, col, PositionType::Peg});
+          moves_from_parent.emplace_back(
+              MoveFromParent(PositionPatch{row, col, PositionType::NoP},
+                             PositionPatch{row - 1, col, PositionType::NoP},
+                             PositionPatch{row - 2, col, PositionType::Peg}));
         }
+      }//for
+    }//for
 
-        if(move_from_parent)
-        {
-          auto peg_position = std::make_shared<Board>();
-          peg_position->set_parent(parent_position, move_from_parent.value());
+            //if(move_from_parent)
+    for(auto const& move_from_parent : moves_from_parent)
+    {
+      auto peg_position = std::make_shared<Board>();
+      peg_position->set_parent(parent_position, move_from_parent);
 
-          if(peg_position->peg_count() == 1)
-          {
-            solutions.push_back(std::move(peg_position));
-          }
-          else
-          {
-            positions.push_back(peg_position);
-          }
-
-          // Reset move_from_parent
-          move_from_parent = std::nullopt;
-          ++counter;
-        }
+      if(peg_position->peg_count() == 1)
+      {
+        solutions.push_back(std::move(peg_position));
       }
+      else
+      {
+        positions.push_back(peg_position);
+      }
+      ++counter;
     }
+
+    moves_from_parent.clear();
 
 #ifdef ENABLE_TIME
     auto const now = high_resolution_clock::now();

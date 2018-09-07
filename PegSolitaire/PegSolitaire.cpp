@@ -11,10 +11,10 @@ int main()
 
   english_board.print();
 
-  auto steps = ps::solve(english_board);
+  std::vector<std::shared_ptr<ps::Board>> steps;
 
   auto const start = high_resolution_clock::now();
-  int loop = 10;
+  int loop = 1;
   for(int i = 0; i < loop; ++i)
   {
     steps = ps::solve(english_board);
