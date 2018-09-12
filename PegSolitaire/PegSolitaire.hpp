@@ -12,7 +12,7 @@
 
 namespace
 {
-enum PositionType
+enum PositionType : char
 {
   Inv /*Invalid*/,
   NoP /*No Peg*/,
@@ -29,22 +29,20 @@ struct PositionPatch
 class MoveFromParent
 {
   public:
-  MoveFromParent(PositionPatch const& first,
-                 PositionPatch const& second,
-                 PositionPatch const& third)
+  MoveFromParent(PositionPatch&& first, PositionPatch&& second, PositionPatch&& third)
   {
-    patches_.push_back(first);
-    patches_.push_back(second);
-    patches_.push_back(third);
+    patches_[0] = std::move(first);
+    patches_[1] = std::move(second);
+    patches_[2] = std::move(third);
   }
 
-  std::vector<PositionPatch> const& get_move() const
+  std::array<PositionPatch, 3> const& get_move() const
   {
     return patches_;
   }
 
   private:
-  std::vector<PositionPatch> patches_;
+  std::array<PositionPatch, 3> patches_;
 };
 } // namespace
 
