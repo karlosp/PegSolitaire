@@ -76,20 +76,23 @@ class Board
 
     PegPositionContainer patched_board = parent->get_positions();
 
-    for(auto& patch : move_from_parent.get_move())
-    {
-      patched_board[patch.row][patch.col] = patch.type;
-    }
+    auto& patch0 = move_from_parent.get_move()[0];
+    auto& patch1 = move_from_parent.get_move()[1];
+    auto& patch2 = move_from_parent.get_move()[2];
+
+    patched_board[patch0.row][patch0.col] = patch0.type;
+    patched_board[patch1.row][patch1.col] = patch1.type;
+    patched_board[patch2.row][patch2.col] = patch2.type;
 
     set_positions(std::move(patched_board), parent->peg_count() - 1);
 
     // Starting peg position
-    from_row = move_from_parent.get_move().front().row;
-    from_col = move_from_parent.get_move().front().col;
+    from_row = patch0.row;
+    from_col = patch0.col;
 
     // Last patch position it where we move peg
-    to_row = move_from_parent.get_move().back().row;
-    to_col = move_from_parent.get_move().back().col;
+    to_row = patch2.row;
+    to_col = patch2.col;
   }
 
   std::shared_ptr<Board> get_parent()
