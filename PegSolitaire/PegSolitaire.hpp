@@ -193,14 +193,17 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
     positions.pop_back();
 
     // generate all possible positions
-    for(auto row = 0; row < (int)board.size(); ++row)
+    for(auto row = 0; row < 7; ++row)
     {
-      for(auto col = 0; col < (int)board.front().size(); ++col)
+      for(auto col = 0; col < 7; ++col)
       {
-
+        if(board[row][col] != PositionType::Peg)
+        {
+          continue;
+        }
         // can move rigth
-        if(col < 5 && board[row][col] == PositionType::Peg &&
-           board[row][col + 1] == PositionType::Peg && board[row][col + 2] == PositionType::NoP)
+        if(col < 5 && board[row][col + 1] == PositionType::Peg &&
+           board[row][col + 2] == PositionType::NoP)
         {
           moves_from_parent.emplace_back(
               MoveFromParent(PositionPatch{row, col, PositionType::NoP},
@@ -208,8 +211,7 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
                              PositionPatch{row, col + 2, PositionType::Peg}));
         }
         // can move left
-        else if(col > 1 && board[row][col] == PositionType::Peg &&
-                board[row][col - 1] == PositionType::Peg &&
+        else if(col > 1 && board[row][col - 1] == PositionType::Peg &&
                 board[row][col - 2] == PositionType::NoP)
         {
           moves_from_parent.emplace_back(
@@ -218,8 +220,7 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
                              PositionPatch{row, col - 2, PositionType::Peg}));
         }
         // can move down
-        else if(row < 5 && board[row][col] == PositionType::Peg &&
-                board[row + 1][col] == PositionType::Peg &&
+        else if(row < 5 && board[row + 1][col] == PositionType::Peg &&
                 board[row + 2][col] == PositionType::NoP)
         {
           moves_from_parent.emplace_back(
@@ -228,8 +229,7 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
                              PositionPatch{row + 2, col, PositionType::Peg}));
         }
         // can move up
-        else if(row > 1 && board[row][col] == PositionType::Peg &&
-                board[row - 1][col] == PositionType::Peg &&
+        else if(row > 1 && board[row - 1][col] == PositionType::Peg &&
                 board[row - 2][col] == PositionType::NoP)
         {
           moves_from_parent.emplace_back(
@@ -237,10 +237,10 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
                              PositionPatch{row - 1, col, PositionType::NoP},
                              PositionPatch{row - 2, col, PositionType::Peg}));
         }
-      }//for
-    }//for
+      } //for
+    } //for
 
-            //if(move_from_parent)
+    //if(move_from_parent)
     for(auto const& move_from_parent : moves_from_parent)
     {
       auto peg_position = std::make_shared<Board>();
