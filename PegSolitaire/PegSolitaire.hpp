@@ -182,7 +182,7 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
         }
 
         // can move left
-        if(col > 2 && board[row][col - 1] == PositionType::Peg &&
+        if(col > 1 && board[row][col - 1] == PositionType::Peg &&
            board[row][col - 2] == PositionType::NoP)
         {
           moves_from_parent.emplace_back(
@@ -200,7 +200,7 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
                              PositionPatch{row + 2, col, PositionType::Peg}));
         }
         // can move up
-        if(row > 2 && board[row - 1][col] == PositionType::Peg &&
+        if(row > 1 && board[row - 1][col] == PositionType::Peg &&
            board[row - 2][col] == PositionType::NoP)
         {
           moves_from_parent.emplace_back(
