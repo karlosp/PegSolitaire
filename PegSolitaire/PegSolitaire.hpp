@@ -181,6 +181,15 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
           continue;
         }
 
+        // can move left
+        if(col > 2 && board[row][col - 1] == PositionType::Peg &&
+           board[row][col - 2] == PositionType::NoP)
+        {
+          moves_from_parent.emplace_back(
+              MoveFromParent(PositionPatch{row, col, PositionType::NoP},
+                             PositionPatch{row, col - 1, PositionType::NoP},
+                             PositionPatch{row, col - 2, PositionType::Peg}));
+        }
         // can move down
         if(row < 5 && board[row + 1][col] == PositionType::Peg && 
            board[row + 2][col] == PositionType::NoP)
@@ -189,15 +198,6 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
               MoveFromParent(PositionPatch{row, col, PositionType::NoP},
                              PositionPatch{row + 1, col, PositionType::NoP},
                              PositionPatch{row + 2, col, PositionType::Peg}));
-        }
-        // can move rigth
-        if(col < 5 && board[row][col + 1] == PositionType::Peg &&
-           board[row][col + 2] == PositionType::NoP)
-        {
-          moves_from_parent.emplace_back(
-              MoveFromParent(PositionPatch{row, col, PositionType::NoP},
-                             PositionPatch{row, col + 1, PositionType::NoP},
-                             PositionPatch{row, col + 2, PositionType::Peg}));
         }
         // can move up
         if(row > 2 && board[row - 1][col] == PositionType::Peg &&
@@ -208,14 +208,14 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
                              PositionPatch{row - 1, col, PositionType::NoP},
                              PositionPatch{row - 2, col, PositionType::Peg}));
         }
-        // can move left
-        if(col > 2 && board[row][col - 1] == PositionType::Peg &&
-           board[row][col - 2] == PositionType::NoP)
+        // can move rigth
+        if(col < 5 && board[row][col + 1] == PositionType::Peg &&
+           board[row][col + 2] == PositionType::NoP)
         {
           moves_from_parent.emplace_back(
               MoveFromParent(PositionPatch{row, col, PositionType::NoP},
-                             PositionPatch{row, col - 1, PositionType::NoP},
-                             PositionPatch{row, col - 2, PositionType::Peg}));
+                             PositionPatch{row, col + 1, PositionType::NoP},
+                             PositionPatch{row, col + 2, PositionType::Peg}));
         }
       } //for
     } //for
