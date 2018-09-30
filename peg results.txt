@@ -1,0 +1,174 @@
+1.072.778
+
+Lapsed: 30 s
+Positions counter 109
+Last position pegs count 3
+Moves counter 85.510.365
+Solutions size: 67.540
+
+Lapsed: 30 s
+Positions counter 99
+Last position pegs count 4
+Moves counter 86.832.004
+Solutions size: 69.180
+
+Position counter: 27869049
+Finished in: 7.99727 sec
+
+
+~~~~~~~~~~~~~~~
+
+  ...
+  ...
+.......
+...o...
+.......
+  ...
+  ...
+
+Peg count: 32
+
+0 3 1 2
+down left right up
+
+counter 20.384
+solutions size: 2
+Solving took: 17,5257 ms
+0 3 2 1
+down left up right
+
+counter 20.384
+solutions size: 2
+Solving took: 9,21588 ms
+0 1 3 2
+down right left up
+
+counter 20.384
+solutions size: 2
+Solving took: 9,44898 ms
+0 1 2 3
+down right up left
+
+counter 20.382
+solutions size: 2
+Solving took: 9,87512 ms
+0 2 3 1
+down up left right
+
+counter 20.382
+solutions size: 2
+Solving took: 9,5718 ms
+0 2 1 3
+down up right left
+
+counter 20.382
+solutions size: 2
+Solving took: 9,44389 ms
+3 0 1 2
+left down right up
+
+counter 20.384
+solutions size: 2
+Solving took: 9,10621 ms
+3 0 2 1
+left down up right
+
+counter 20.384
+solutions size: 2
+Solving took: 9,13549 ms
+3 1 0 2
+left right down up
+
+counter 7.667.888
+solutions size: 2
+Solving took: 3.170,83 ms
+3 1 2 0
+left right up down
+
+counter 7.667.888
+solutions size: 2
+Solving took: 3.140,23 ms
+3 2 0 1
+left up down right
+
+counter 20.384
+solutions size: 2
+Solving took: 9,10322 ms
+3 2 1 0
+left up right down
+
+counter 7.667.888
+solutions size: 2
+Solving took: 3.149,92 ms
+1 0 3 2
+right down left up
+
+counter 7.667.888
+solutions size: 2
+Solving took: 3.182,32 ms
+1 0 2 3
+right down up left
+
+counter 7.667.888
+solutions size: 2
+Solving took: 3.173,21 ms
+1 3 0 2
+right left down up
+
+counter 7.667.888
+solutions size: 2
+Solving took: 3.191,71 ms
+1 3 2 0
+right left up down
+
+counter 7.667.888
+solutions size: 2
+Solving took: 3.163,26 ms
+1 2 0 3
+right up down left
+
+counter 7.667.888
+solutions size: 2
+Solving took: 3.101,15 ms
+1 2 3 0
+right up left down
+
+counter 7.667.888
+solutions size: 2
+Solving took: 3.140,73 ms
+2 0 3 1
+up down left right
+
+counter 20.382
+solutions size: 2
+Solving took: 8,86714 ms
+2 0 1 3
+up down right left
+
+counter 20.382
+solutions size: 2
+Solving took: 8,90778 ms
+2 3 0 1
+up left down right
+
+counter 20.382
+solutions size: 2
+Solving took: 8,95619 ms
+2 3 1 0
+up left right down
+
+counter 7.667.888
+solutions size: 2
+Solving took: 3.146,88 ms
+2 1 0 3
+up right down left
+
+counter 7.667.888
+solutions size: 2
+Solving took: 3.065,02 ms
+2 1 3 0
+up right left down
+
+counter 7.667.888
+solutions size: 2
+Solving took: 3.107,82 ms
