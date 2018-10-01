@@ -14,7 +14,7 @@ int main()
   std::vector<std::shared_ptr<ps::Board>> steps;
 
   auto const start = high_resolution_clock::now();
-  int loop = 100;
+  int loop = 10;
   for(int i = 0; i < loop; ++i)
   {
     steps = ps::solve(english_board);

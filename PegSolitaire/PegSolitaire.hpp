@@ -9,7 +9,7 @@
 #include <vector>
 #include <windows.h>
 
-#define ENABLE_TIME TRUE;
+//#define ENABLE_TIME TRUE;
 
 namespace
 {
@@ -20,30 +20,21 @@ enum PositionType : char
   Peg
 };
 
-struct PositionPatch
-{
-  int row = 0;
-  int col = 0;
-  PositionType type;
-};
-
 class MoveFromParent
 {
   public:
-  MoveFromParent(char first, char second, char third)
+  MoveFromParent(std::vector<char>::const_iterator first, char second,
+                 char third)
   {
-    patches_[0] = first;
-    patches_[1] = second;
-    patches_[2] = third;
+    first_ = first;
+    second_ = second;
+    val_ = third;
   }
 
-  std::array<char, 3> const& get_move() const
-  {
-    return patches_;
-  }
 
-  private:
-  std::array<char, 3> patches_;
+  std::vector<char>::const_iterator first_;
+  char second_;
+  char val_;
 };
 } // namespace
 
@@ -51,7 +42,12 @@ namespace ps
 {
 
 //using PegPositionContainer = std::array<std::array<PositionType, 7>, 7>;
-using PegPositionContainer = std::unordered_set<char>;
+using PegPositionContainer = std::vector<char>;
+
+bool find(PegPositionContainer const& vec, char val)
+{
+  return std::find(vec.begin(), vec.end(), val) != vec.end();
+}
 
 class Board
 {
@@ -61,7 +57,7 @@ class Board
     positions_ = std::move(new_positions);
   }
 
-  PegPositionContainer  get_positions() const
+  PegPositionContainer get_positions() const
   {
     return positions_;
   }
@@ -76,10 +72,9 @@ class Board
     parent_ = parent;
 
     PegPositionContainer patched_board = parent->get_positions();
-
-    patched_board.erase(move_from_parent.get_move()[0]);
-    patched_board.erase(move_from_parent.get_move()[1]);
-    patched_board.emplace(move_from_parent.get_move()[2]);
+    patched_board.erase(move_from_parent.first_);
+    patched_board.erase(std::find(patched_board.begin(), patched_board.end(),move_from_parent.second_));
+    patched_board.emplace_back(move_from_parent.val_);
 
     set_positions(std::move(patched_board));
   }
@@ -95,19 +90,20 @@ class Board
     std::cout << "~~~~~~~~~~~~~~~\n\n";
     std::array<std::array<PositionType, 7>, 7> positions{
         std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
-                                   std::array<PositionType, 7>{Inv, Inv, NoP, NoP, NoP, Inv, Inv},
-                                   std::array<PositionType, 7>{NoP, NoP, NoP, NoP, NoP, NoP, NoP},
-                                   std::array<PositionType, 7>{NoP, NoP, NoP, NoP, NoP, NoP, NoP},
-                                   std::array<PositionType, 7>{NoP, NoP, NoP, NoP, NoP, NoP, NoP},
-                                   std::array<PositionType, 7>{Inv, Inv, NoP, NoP, NoP, Inv, Inv},
-                                   std::array<PositionType, 7>{Inv, Inv, NoP, NoP, NoP, Inv, Inv}};
+        std::array<PositionType, 7>{Inv, Inv, NoP, NoP, NoP, Inv, Inv},
+        std::array<PositionType, 7>{NoP, NoP, NoP, NoP, NoP, NoP, NoP},
+        std::array<PositionType, 7>{NoP, NoP, NoP, NoP, NoP, NoP, NoP},
+        std::array<PositionType, 7>{NoP, NoP, NoP, NoP, NoP, NoP, NoP},
+        std::array<PositionType, 7>{Inv, Inv, NoP, NoP, NoP, Inv, Inv},
+        std::array<PositionType, 7>{Inv, Inv, NoP, NoP, NoP, Inv, Inv}};
 
     for(auto row = 0u; row < positions.size(); ++row)
     {
       for(auto col = 0u; col < positions.front().size(); ++col)
       {
         auto const cell = positions[row][col];
-        if(positions_.count(row*7+col)/* cell == PositionType::Peg*/)
+
+        if(find(positions_, row * 7 + col) /* cell == PositionType::Peg*/)
           std::cout << ".";
         else if(cell == PositionType::NoP)
           std::cout << "o";
@@ -127,20 +123,9 @@ class Board
 
 Board get_english_board()
 {
-  //PegPositionContainer positions{std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
-  //                               std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
-  //                               std::array<PositionType, 7>{Peg, Peg, Peg, Peg, Peg, Peg, Peg},
-  //                               std::array<PositionType, 7>{Peg, Peg, Peg, NoP, Peg, Peg, Peg},
-  //                               std::array<PositionType, 7>{Peg, Peg, Peg, Peg, Peg, Peg, Peg},
-  //                               std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
-  //                               std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv}};
-  PegPositionContainer positions{2, 3, 4,
-                                  9,10,11,
-                                 14,15,16,17,18,19,20,
-                                21,22,23,25,26,27,
-                                28,29,30,31,32,33,34,
-                                37,38,39,
-                                44,45,46  };
+
+  PegPositionContainer positions{2,  3,  4,  9,  10, 11, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                                 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 44, 45, 46};
   Board board;
   board.set_positions(std::move(positions));
 
@@ -154,13 +139,13 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
   long long counter{0};
   auto start_board = std::make_shared<Board>();
   *start_board = board;
-  std::deque<std::shared_ptr<Board> /*, Moya::Allocator<std::shared_ptr<Board>>*/> positions;
+  std::deque<std::shared_ptr<Board>> positions;
   positions.emplace_back(std::move(start_board));
-  //std::deque<std::shared_ptr<Board>> positions{start_board};
   std::deque<std::shared_ptr<Board>> solutions;
 
   std::optional<int> patched_peg_count;
-  const std::unordered_set<char> invalid_pos{0,1,5,6,7,8,12,13,35,36,40,41,42,43,47,48};
+  const std::unordered_set<char> invalid_pos{
+      0, 1, 5, 6, 7, 8, 12, 13, 35, 36, 40, 41, 42, 43, 47, 48};
 
 #ifdef ENABLE_TIME
   auto start = high_resolution_clock::now();
@@ -182,28 +167,34 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
     const auto board = parent_position->get_positions();
     positions.pop_back();
 
+    //std::cout << "Board len: " << board.size() << "\n";
     // generate all possible positions
-    for(auto pos : board)
+    for(auto pos = board.begin(); pos != board.end();pos++)
     {
-      // can move left
-      if(pos >= 4 && board.count(pos - 1) && board.count(pos - 2) == 0u && invalid_pos.count(pos-2) == 0u)
-      {
-        moves_from_parent.emplace_back(MoveFromParent(pos,pos-1, pos-2));
-      }
+
       // can move down
-      if(pos <= 32 && board.count(pos + 7) && board.count(pos + 14) == 0u && invalid_pos.count(pos+14) == 0u)
+      if(*pos <= 32 && find(board, *pos + 7) && !find(board, *pos + 14) &&
+         invalid_pos.count(*pos + 14) == 0u)
       {
-        moves_from_parent.emplace_back(MoveFromParent(pos, pos +7, pos +14));
-      }
-      // can move up
-      if(pos >= 16 && board.count(pos - 7) && board.count(pos - 14) == 0u && invalid_pos.count(pos-14) == 0u)
-      {
-        moves_from_parent.emplace_back(MoveFromParent(pos, pos - 7, pos - 14));
+        moves_from_parent.emplace_back(MoveFromParent(pos, *pos + 7, *pos + 14));
       }
       // can move right
-      if(pos <= 44 && board.count(pos + 1) && board.count(pos + 2) == 0u && invalid_pos.count(pos+2) == 0u)
+      if(*pos <= 44 && find(board, *pos + 1) && !find(board, *pos + 2) &&
+         invalid_pos.count(*pos + 2) == 0u)
       {
-        moves_from_parent.emplace_back(MoveFromParent(pos, pos + 1, pos + 2));
+        moves_from_parent.emplace_back(MoveFromParent(pos, *pos + 1, *pos + 2));
+      }
+      // can move left
+      if(*pos >= 4 && find(board, *pos - 1) && !find(board, *pos - 2) &&
+         invalid_pos.count(*pos - 2) == 0u)
+      {
+        moves_from_parent.emplace_back(MoveFromParent(pos, *pos - 1, *pos - 2));
+      }
+      // can move up
+      if(*pos >= 16 && find(board, *pos - 7) && !find(board, *pos - 14) &&
+         invalid_pos.count(*pos - 14) == 0u)
+      {
+        moves_from_parent.emplace_back(MoveFromParent(pos, *pos - 7, *pos - 14));
       }
     }
 
