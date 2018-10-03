@@ -55,7 +55,40 @@ using PegPositionContainer = std::array<std::array<PositionType, 7>, 7>;
 
 class Board
 {
+  private:
+  Board() = default;
+  Board(const Board&) = default;
+  Board& operator=(const Board&) = default;
+
+
   public:
+
+  char ref_count_ = 0;
+  static Board* createBoard()
+  {
+    return new Board();
+  }
+
+  void remove_reference() {
+    --ref_count_;
+    if(ref_count_ == 0)
+    {
+      if(parent_)
+      {
+        parent_->remove_reference();
+        parent_ = nullptr;
+      }
+      delete this;
+    }
+  }
+
+  ~Board() {
+    if(parent_)
+    {
+      parent_->remove_reference();
+    }
+  }
+
   void set_positions(PegPositionContainer&& new_positions, int peg_count)
   {
     positions_ = std::move(new_positions);
@@ -72,9 +105,10 @@ class Board
     return peg_counter_;
   }
 
-  void set_parent(std::shared_ptr<Board> parent, MoveFromParent const& move_from_parent)
+  void set_parent(Board* parent, MoveFromParent const& move_from_parent)
   {
     parent_ = parent;
+    parent->ref_count_++;
 
     PegPositionContainer patched_board = parent->get_positions();
 
@@ -94,7 +128,7 @@ class Board
     to_col = move_from_parent.get_move().back().col;
   }
 
-  std::shared_ptr<Board> get_parent()
+  Board* get_parent()
   {
     return parent_;
   }
@@ -135,7 +169,7 @@ class Board
 
   private:
   PegPositionContainer positions_;
-  std::shared_ptr<Board> parent_ = nullptr;
+  Board* parent_ = nullptr;
   int peg_counter_ = 0;
 
   int from_row = -1;
@@ -144,7 +178,7 @@ class Board
   int to_col = -1;
 };
 
-Board get_english_board()
+Board* get_english_board()
 {
   PegPositionContainer positions{std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
                                  std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
@@ -154,21 +188,21 @@ Board get_english_board()
                                  std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
                                  std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv}};
 
-  Board board;
-  board.set_positions(std::move(positions), 32);
+  auto board = Board::createBoard();
+  board->set_positions(std::move(positions), 32);
 
   return board;
 }
 
-std::vector<std::shared_ptr<Board>> solve(Board const& board)
+std::vector<Board*> solve(Board* board)
 {
   using namespace std::chrono;
   std::cout.imbue(std::locale(""));
   long long counter{0};
-  auto start_board = std::make_shared<Board>();
-  *start_board = board;
-  std::deque<std::shared_ptr<Board>> positions{start_board};
-  std::deque<std::shared_ptr<Board>> solutions;
+  auto start_board = Board::createBoard();
+  //*start_board = *board;
+  std::deque<Board*> positions{board};
+  std::deque<Board*> solutions;
 
   std::optional<int> patched_peg_count;
 
@@ -237,13 +271,13 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
                              PositionPatch{row - 1, col, PositionType::NoP},
                              PositionPatch{row - 2, col, PositionType::Peg}));
         }
-      }//for
-    }//for
+      } //for
+    } //for
 
-            //if(move_from_parent)
+    //if(move_from_parent)
     for(auto const& move_from_parent : moves_from_parent)
     {
-      auto peg_position = std::make_shared<Board>();
+      auto peg_position = Board::createBoard();
       peg_position->set_parent(parent_position, move_from_parent);
 
       if(peg_position->peg_count() == 1)
@@ -255,6 +289,11 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
         positions.push_back(peg_position);
       }
       ++counter;
+    }
+    if(moves_from_parent.empty())
+    {
+      // we did not produce any children
+      delete parent_position;
     }
 
     moves_from_parent.clear();
@@ -278,7 +317,7 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
             << " s\n";
 #endif
 
-  std::vector<std::shared_ptr<Board>> results;
+  std::vector<Board*> results;
 
   if(!solutions.empty())
   {
@@ -296,7 +335,7 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
   return results;
 }
 
-void print_steps(std::vector<std::shared_ptr<Board>> const& steps)
+void print_steps(std::vector<Board*> const& steps)
 {
   for(auto const& board : steps)
   {

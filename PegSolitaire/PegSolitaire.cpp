@@ -9,12 +9,12 @@ int main()
   using namespace std::chrono;
   auto const english_board = ps::get_english_board();
 
-  english_board.print();
+  english_board->print();
 
-  std::vector<std::shared_ptr<ps::Board>> steps;
+  std::vector<ps::Board*> steps;
 
   auto const start = high_resolution_clock::now();
-  int loop = 1;
+  int loop = 100;
   for(int i = 0; i < loop; ++i)
   {
     steps = ps::solve(english_board);
