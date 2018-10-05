@@ -62,7 +62,7 @@ BraceWrapping: {
     BeforeCatch : 'true'
     BeforeElse : 'true'
     IndentBraces : 'false'
-    AfterExternBlock : 'true'
+    #AfterExternBlock : 'true'
     SplitEmptyFunction : 'false'
     SplitEmptyRecord : 'false'
     SplitEmptyNamespace : 'true'
@@ -122,6 +122,6 @@ SortIncludes: true
 # Comments are for developers, they should arrange them
 ReflowComments: false
 
-IncludeBlocks: Preserve
-IndentPPDirectives: AfterHash
+#IncludeBlocks: Preserve
+#IndentPPDirectives: AfterHash
 ---

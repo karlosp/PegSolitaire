@@ -3,6 +3,7 @@
 #include <chrono>
 #include <deque>
 #include <iostream>
+#include <list>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -51,9 +52,39 @@ namespace ps
 
 using PegPositionContainer = std::array<std::array<PositionType, 7>, 7>;
 
+class Board;
+std::vector<Board*> recycled;
 class Board
 {
   public:
+  Board() = default;
+  Board& operator=(Board&& other) = default;
+  Board& operator=(const Board&) = default;
+  Board(const Board&) = default;
+
+  void remove_reference()
+  {
+    --ref_count_;
+    if(ref_count_ == 0)
+    {
+      if(parent_)
+      {
+        parent_->remove_reference();
+        parent_ = nullptr;
+      }
+      recycled.push_back(this);
+      //delete this;
+    }
+  }
+
+  ~Board()
+  {
+    if(parent_)
+    {
+      parent_->remove_reference();
+      parent_ = nullptr;
+    }
+  }
   void set_positions(PegPositionContainer&& new_positions, int peg_count)
   {
     positions_ = std::move(new_positions);
@@ -70,12 +101,13 @@ class Board
     return peg_counter_;
   }
 
-  void set_parent(std::shared_ptr<Board> parent,
+  void set_parent(Board* parent,
                   PositionPatch const& patch0,
                   PositionPatch const& patch1,
                   PositionPatch const& patch2)
   {
     parent_ = parent;
+    ++parent_->ref_count_;
 
     PegPositionContainer patched_board = parent->get_positions();
 
@@ -86,7 +118,7 @@ class Board
     set_positions(std::move(patched_board), parent->peg_count() - 1);
   }
 
-  std::shared_ptr<Board> get_parent() const
+  Board* get_parent() const
   {
     return parent_;
   }
@@ -114,13 +146,15 @@ class Board
     std::cout << "Peg count: " << peg_counter_ << "\n\n";
   }
 
+  char ref_count_ = 0;
+
   private:
   PegPositionContainer positions_;
-  std::shared_ptr<Board> parent_ = nullptr;
+  Board* parent_ = nullptr;
   int peg_counter_ = 0;
 };
 
-Board get_english_board()
+std::unique_ptr<Board> get_english_board()
 {
   PegPositionContainer positions{std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
                                  std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
@@ -130,32 +164,42 @@ Board get_english_board()
                                  std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
                                  std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv}};
 
-  Board board;
-  board.set_positions(std::move(positions), 32);
+  auto board = std::make_unique<Board>();
+  board->set_positions(std::move(positions), 32);
 
-  return board;
+  return std::move(board);
 }
 
-std::vector<std::shared_ptr<Board>> solve(Board const& board)
+Board* get_new_board()
+{
+  if(!recycled.empty())
+  {
+    auto new_board = recycled.back();
+    recycled.pop_back();
+
+    return new_board;
+  }
+  else
+  {
+    return new Board();
+  }
+}
+
+std::vector<Board*> solve(Board* const board)
 {
   using namespace std::chrono;
   std::cout.imbue(std::locale(""));
   long long counter{0};
-  auto start_board = std::make_shared<Board>();
-  *start_board = board;
-  std::deque<std::shared_ptr<Board> /*, Moya::Allocator<std::shared_ptr<Board>>*/> positions;
-  positions.emplace_back(std::move(start_board));
-  //std::deque<std::shared_ptr<Board>> positions{start_board};
-  std::deque<std::shared_ptr<Board>> solutions;
 
-  std::optional<int> patched_peg_count;
+  std::vector<Board*> positions; 
+  positions.push_back(board);
+  std::vector<Board*> solutions;
+  ;
 
 #ifdef ENABLE_TIME
   auto start = high_resolution_clock::now();
   const auto beggining = start;
 #endif // ENABLE_TIME
-
-
 
   while(!positions.empty() &&
 #ifdef ENABLE_TIME
@@ -169,7 +213,8 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
     // Copy to stack to be faster
     const auto board = parent_position->get_positions();
     positions.pop_back();
-
+    bool has_child = false;
+    auto current_counter = counter;
     // generate all possible positions
     for(auto row = 0; row < 7; ++row)
     {
@@ -184,7 +229,7 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
         if(col > 1 && board[row][col - 1] == PositionType::Peg &&
            board[row][col - 2] == PositionType::NoP)
         {
-          auto peg_position = std::make_shared<Board>();
+          auto peg_position = get_new_board();
           peg_position->set_parent(parent_position,
                                    PositionPatch{row, col, PositionType::NoP},
                                    PositionPatch{row, col - 1, PositionType::NoP},
@@ -204,7 +249,7 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
         if(row < 5 && board[row + 1][col] == PositionType::Peg &&
            board[row + 2][col] == PositionType::NoP)
         {
-          auto peg_position = std::make_shared<Board>();
+          auto peg_position = get_new_board();
           peg_position->set_parent(parent_position,
                                    PositionPatch{row, col, PositionType::NoP},
                                    PositionPatch{row + 1, col, PositionType::NoP},
@@ -224,7 +269,7 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
         if(row > 1 && board[row - 1][col] == PositionType::Peg &&
            board[row - 2][col] == PositionType::NoP)
         {
-          auto peg_position = std::make_shared<Board>();
+          auto peg_position = get_new_board();
           peg_position->set_parent(parent_position,
                                    PositionPatch{row, col, PositionType::NoP},
                                    PositionPatch{row - 1, col, PositionType::NoP},
@@ -244,7 +289,7 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
         if(col < 5 && board[row][col + 1] == PositionType::Peg &&
            board[row][col + 2] == PositionType::NoP)
         {
-          auto peg_position = std::make_shared<Board>();
+          auto peg_position = get_new_board();
           peg_position->set_parent(parent_position,
                                    PositionPatch{row, col, PositionType::NoP},
                                    PositionPatch{row, col + 1, PositionType::NoP},
@@ -263,6 +308,18 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
       } //for
     } //for
 
+    has_child = current_counter < counter;
+
+    if(!has_child)
+    {
+      // Instead of deleting we can recycle it!
+      auto parent = parent_position->get_parent();
+      if(parent)
+      {
+        parent->remove_reference();
+      }
+      recycled.push_back(parent_position);
+    }
 #ifdef ENABLE_TIME
     auto const now = high_resolution_clock::now();
     if((now - start) > std::chrono::seconds(2))
@@ -282,25 +339,27 @@ std::vector<std::shared_ptr<Board>> solve(Board const& board)
             << " s\n";
 #endif
 
-  std::vector<std::shared_ptr<Board>> results;
+  std::vector<Board*> results;
 
   if(!solutions.empty())
   {
-    auto current_position = solutions.back();
+    Board* current_position = solutions.back();
 
     while(current_position->get_parent())
     {
-      results.push_back(current_position);
+      results.emplace_back(current_position);
       current_position = current_position->get_parent();
     }
   }
   std::reverse(results.begin(), results.end());
   std::cout << "counter " << counter << "\n";
   std::cout << "solutions size: " << solutions.size() << "\n";
+
   return results;
 }
 
-void print_steps(std::vector<std::shared_ptr<Board>> const& steps)
+template <class T>
+void print_steps(T const& steps)
 {
   for(auto const& board : steps)
   {
