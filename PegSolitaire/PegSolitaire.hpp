@@ -150,13 +150,13 @@ class Board
 
 std::unique_ptr<Board> get_english_board()
 {
-  PegPositionContainer positions{std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
-                                 std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
-                                 std::array<PositionType, 7>{Peg, Peg, Peg, Peg, Peg, Peg, Peg},
-                                 std::array<PositionType, 7>{Peg, Peg, Peg, NoP, Peg, Peg, Peg},
-                                 std::array<PositionType, 7>{Peg, Peg, Peg, Peg, Peg, Peg, Peg},
-                                 std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv},
-                                 std::array<PositionType, 7>{Inv, Inv, Peg, Peg, Peg, Inv, Inv}};
+  PegPositionContainer positions {std::array<PositionType, 7> {Inv, Inv, Peg, Peg, Peg, Inv, Inv},
+                                  std::array<PositionType, 7> {Inv, Inv, Peg, Peg, Peg, Inv, Inv},
+                                  std::array<PositionType, 7> {Peg, Peg, Peg, Peg, Peg, Peg, Peg},
+                                  std::array<PositionType, 7> {Peg, Peg, Peg, NoP, Peg, Peg, Peg},
+                                  std::array<PositionType, 7> {Peg, Peg, Peg, Peg, Peg, Peg, Peg},
+                                  std::array<PositionType, 7> {Inv, Inv, Peg, Peg, Peg, Inv, Inv},
+                                  std::array<PositionType, 7> {Inv, Inv, Peg, Peg, Peg, Inv, Inv}};
 
   auto board = std::make_unique<Board>();
   board->set_positions(std::move(positions), 32);
@@ -210,9 +210,9 @@ inline void can_move_left(int row,
   {
     auto peg_position = get_new_board();
     peg_position->set_parent(parent_position,
-                             PositionPatch{row, col, PositionType::NoP},
-                             PositionPatch{row, col - 1, PositionType::NoP},
-                             PositionPatch{row, col - 2, PositionType::Peg});
+                             PositionPatch {row, col, PositionType::NoP},
+                             PositionPatch {row, col - 1, PositionType::NoP},
+                             PositionPatch {row, col - 2, PositionType::Peg});
 
     helper_moving_peg_position(peg_position, positions, solutions);
     ++counter;
@@ -231,9 +231,9 @@ inline void can_move_down(int row,
   {
     auto peg_position = get_new_board();
     peg_position->set_parent(parent_position,
-                             PositionPatch{row, col, PositionType::NoP},
-                             PositionPatch{row + 1, col, PositionType::NoP},
-                             PositionPatch{row + 2, col, PositionType::Peg});
+                             PositionPatch {row, col, PositionType::NoP},
+                             PositionPatch {row + 1, col, PositionType::NoP},
+                             PositionPatch {row + 2, col, PositionType::Peg});
 
     helper_moving_peg_position(peg_position, positions, solutions);
     ++counter;
@@ -252,9 +252,9 @@ inline void can_move_up(int row,
   {
     auto peg_position = get_new_board();
     peg_position->set_parent(parent_position,
-                             PositionPatch{row, col, PositionType::NoP},
-                             PositionPatch{row - 1, col, PositionType::NoP},
-                             PositionPatch{row - 2, col, PositionType::Peg});
+                             PositionPatch {row, col, PositionType::NoP},
+                             PositionPatch {row - 1, col, PositionType::NoP},
+                             PositionPatch {row - 2, col, PositionType::Peg});
 
     helper_moving_peg_position(peg_position, positions, solutions);
     ++counter;
@@ -273,9 +273,9 @@ inline void can_move_right(int row,
   {
     auto peg_position = get_new_board();
     peg_position->set_parent(parent_position,
-                             PositionPatch{row, col, PositionType::NoP},
-                             PositionPatch{row, col + 1, PositionType::NoP},
-                             PositionPatch{row, col + 2, PositionType::Peg});
+                             PositionPatch {row, col, PositionType::NoP},
+                             PositionPatch {row, col + 1, PositionType::NoP},
+                             PositionPatch {row, col + 2, PositionType::Peg});
 
     helper_moving_peg_position(peg_position, positions, solutions);
     ++counter;
@@ -290,13 +290,29 @@ std::vector<Board> solve(Board board)
     recycled.push_back(&board);
   }
   std::cout.imbue(std::locale(""));
-  long long counter{0};
+  long long counter {0};
 
   std::vector<Board*> positions;
   positions.push_back(&board);
   std::vector<Board*> solutions;
-  
-
+  // clang-format off
+  std::vector<std::pair<int, int>> row_cols{
+  //      {0, 2}, {0, 3}, {0, 4}, 
+  //      {1, 9}, {1, 10}, {1, 11}, 
+  //{2, 14}, {2, 15}, {2, 16},{2, 17}, {2, 18}, {2, 19}, {2, 20}, 
+  //{3, 21}, {3, 22}, {3, 23}, {3, 24}, {3, 25}, {3, 26}, {3, 27},
+  //{4, 28}, {4, 29}, {4, 30},{4, 31}, {4, 32}, {4, 33}, {4, 34},
+  //      {5, 37}, {5, 38}, {5, 39}, 
+  //      {6, 44}, {6, 45}, {6, 46}
+                   {0, 2}, {0, 3}, {0, 4}, 
+                   {1, 2}, {1, 3}, {1, 4}, 
+  {2, 0}, {2, 1},  {2, 2}, {2, 3}, {2, 4}, {2, 5}, {2, 6}, 
+  {3, 0}, {3, 1},  {3, 2}, {3, 3}, {3, 4}, {3, 5}, {3, 6},
+  {4, 0}, {4, 1},  {4, 2}, {4, 3}, {4, 4}, {4, 5}, {4, 6},
+                   {5, 2}, {5, 3}, {5, 4}, 
+                   {6, 2}, {6, 3}, {6, 4}
+  };
+  //clang-format on
 #ifdef ENABLE_TIME
   auto start = high_resolution_clock::now();
   const auto beggining = start;
@@ -317,28 +333,29 @@ std::vector<Board> solve(Board board)
     bool has_child = false;
     auto current_counter = counter;
     // generate all possible positions
-    for(auto row = 0; row < 7; ++row)
-    {
-      const bool short_col = row < 2 || row > 4;
-      int col = short_col ? 2 : 0;
-      const int max_col = short_col ? 5 : 7;
-      for(; col < max_col; ++col)
+    //for(auto row = 0; row < 7; ++row)
+    //{
+    //  const bool short_col = row < 2 || row > 4;
+    //  int col = short_col ? 2 : 0;
+    //  const int max_col = short_col ? 5 : 7;
+    //  for(; col < max_col; ++col)
+    for(auto& row_col : row_cols)
       {
-        if(board[row][col] != PositionType::Peg)
+        if(board[row_col.first][row_col.second] != PositionType::Peg)
         {
           continue;
         }
 
         // can move left
-        can_move_left(row, col, board, parent_position, positions, solutions, counter);
+        can_move_left(row_col.first, row_col.second, board, parent_position, positions, solutions, counter);
         // can move down
-        can_move_down(row, col, board, parent_position, positions, solutions, counter);
+        can_move_down(row_col.first, row_col.second, board, parent_position, positions, solutions, counter);
         // can move up
-        can_move_up(row, col, board, parent_position, positions, solutions, counter);
+        can_move_up(row_col.first, row_col.second, board, parent_position, positions, solutions, counter);
         // can move rigth
-        can_move_right(row, col, board, parent_position, positions, solutions, counter);
+        can_move_right(row_col.first, row_col.second, board, parent_position, positions, solutions, counter);
       } //for
-    } //for
+    //} //for
 
     has_child = current_counter < counter;
 
