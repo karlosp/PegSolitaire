@@ -289,7 +289,9 @@ std::vector<Board> solve(Board board)
   {
     recycled.push_back(&board);
   }
+#if defined DEBUG
   std::cout.imbue(std::locale(""));
+#endif
   long long counter {0};
 
   std::vector<Board*> positions;
