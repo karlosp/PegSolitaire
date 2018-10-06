@@ -182,6 +182,22 @@ Board* get_new_board()
 }
 
 static std::vector<ps::Board> boards_pool(148, ps::Board());
+
+inline void helper_moving_peg_position(ps::Board*& peg_position,
+                                std::vector<ps::Board*>& positions,
+                                std::vector<ps::Board*>& solutions,
+                                long long& counter)
+{
+  if(peg_position->peg_count() != 1)
+  {
+    positions.emplace_back(std::move(peg_position));
+  }
+  else
+  {
+    solutions.emplace_back(std::move(peg_position));
+  }
+  ++counter;
+}
 std::vector<Board> solve(Board board)
 {
   using namespace std::chrono;
@@ -236,15 +252,7 @@ std::vector<Board> solve(Board board)
                                    PositionPatch{row, col - 1, PositionType::NoP},
                                    PositionPatch{row, col - 2, PositionType::Peg});
 
-          if(peg_position->peg_count() != 1)
-          {
-            positions.emplace_back(std::move(peg_position));
-          }
-          else
-          {
-            solutions.emplace_back(std::move(peg_position));
-          }
-          ++counter;
+          helper_moving_peg_position(peg_position, positions, solutions, counter);
         }
         // can move down
         if(row < 5 && board[row + 1][col] == PositionType::Peg &&
@@ -256,15 +264,7 @@ std::vector<Board> solve(Board board)
                                    PositionPatch{row + 1, col, PositionType::NoP},
                                    PositionPatch{row + 2, col, PositionType::Peg});
 
-          if(peg_position->peg_count() != 1)
-          {
-            positions.emplace_back(std::move(peg_position));
-          }
-          else
-          {
-            solutions.emplace_back(std::move(peg_position));
-          }
-          ++counter;
+          helper_moving_peg_position(peg_position, positions, solutions, counter);
         }
         // can move up
         if(row > 1 && board[row - 1][col] == PositionType::Peg &&
@@ -276,15 +276,7 @@ std::vector<Board> solve(Board board)
                                    PositionPatch{row - 1, col, PositionType::NoP},
                                    PositionPatch{row - 2, col, PositionType::Peg});
 
-          if(peg_position->peg_count() != 1)
-          {
-            positions.emplace_back(std::move(peg_position));
-          }
-          else
-          {
-            solutions.emplace_back(std::move(peg_position));
-          }
-          ++counter;
+          helper_moving_peg_position(peg_position, positions, solutions, counter);
         }
         // can move rigth
         if(col < 5 && board[row][col + 1] == PositionType::Peg &&
@@ -296,15 +288,7 @@ std::vector<Board> solve(Board board)
                                    PositionPatch{row, col + 1, PositionType::NoP},
                                    PositionPatch{row, col + 2, PositionType::Peg});
 
-          if(peg_position->peg_count() != 1)
-          {
-            positions.emplace_back(std::move(peg_position));
-          }
-          else
-          {
-            solutions.emplace_back(std::move(peg_position));
-          }
-          ++counter;
+          helper_moving_peg_position(peg_position, positions, solutions, counter);
         }
       } //for
     } //for
