@@ -10,6 +10,7 @@
 #include <windows.h>
 
 //#define ENABLE_TIME TRUE;
+//#define DEBUG
 
 namespace
 {
@@ -53,7 +54,8 @@ namespace ps
 using PegPositionContainer = std::array<std::array<PositionType, 7>, 7>;
 
 class Board;
-std::vector<Board*> recycled;
+std::vector<ps::Board*> recycled;
+
 class Board
 {
   public:
@@ -77,14 +79,6 @@ class Board
     }
   }
 
-  ~Board()
-  {
-    if(parent_)
-    {
-      parent_->remove_reference();
-      parent_ = nullptr;
-    }
-  }
   void set_positions(PegPositionContainer&& new_positions, int peg_count)
   {
     positions_ = std::move(new_positions);
@@ -107,7 +101,7 @@ class Board
                   PositionPatch const& patch2)
   {
     parent_ = parent;
-    ++parent_->ref_count_;
+    parent_->ref_count_++;
 
     PegPositionContainer patched_board = parent->get_positions();
 
@@ -169,32 +163,39 @@ std::unique_ptr<Board> get_english_board()
 
   return std::move(board);
 }
-
+int new_board_count = 0;
 Board* get_new_board()
 {
+
   if(!recycled.empty())
   {
     auto new_board = recycled.back();
     recycled.pop_back();
-
+    new_board->ref_count_ = 0;
     return new_board;
   }
   else
   {
+    ++new_board_count;
     return new Board();
   }
 }
 
-std::vector<Board*> solve(Board* const board)
+static std::vector<ps::Board> boards_pool(148, ps::Board());
+std::vector<Board> solve(Board board)
 {
   using namespace std::chrono;
+  recycled.clear();
+  for(auto& board : boards_pool)
+  {
+    recycled.push_back(&board);
+  }
   std::cout.imbue(std::locale(""));
   long long counter{0};
 
-  std::vector<Board*> positions; 
-  positions.push_back(board);
+  std::vector<Board*> positions;
+  positions.push_back(&board);
   std::vector<Board*> solutions;
-  ;
 
 #ifdef ENABLE_TIME
   auto start = high_resolution_clock::now();
@@ -339,7 +340,7 @@ std::vector<Board*> solve(Board* const board)
             << " s\n";
 #endif
 
-  std::vector<Board*> results;
+  std::vector<Board> results;
 
   if(!solutions.empty())
   {
@@ -347,14 +348,17 @@ std::vector<Board*> solve(Board* const board)
 
     while(current_position->get_parent())
     {
-      results.emplace_back(current_position);
+      results.emplace_back(*current_position);
       current_position = current_position->get_parent();
     }
   }
   std::reverse(results.begin(), results.end());
-  std::cout << "counter " << counter << "\n";
-  std::cout << "solutions size: " << solutions.size() << "\n";
 
+#if defined DEBUG
+  std::cout << "counter " << counter << "\n";
+  std::cout << "new board count " << new_board_count << "\n";
+  std::cout << "solutions size: " << solutions.size() << "\n";
+#endif
   return results;
 }
 
@@ -363,7 +367,7 @@ void print_steps(T const& steps)
 {
   for(auto const& board : steps)
   {
-    board->print();
+    board.print();
   }
 }
 

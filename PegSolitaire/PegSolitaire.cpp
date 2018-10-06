@@ -11,13 +11,13 @@ int main()
 
   english_board->print();
 
-  std::vector<ps::Board*> steps;
+  std::vector<ps::Board> steps;
 
   auto const start = high_resolution_clock::now();
   int loop = 100;
   for(int i = 0; i < loop; ++i)
   {
-    steps = ps::solve(english_board.get());
+    steps = ps::solve(*english_board.get());
   }
   auto end = high_resolution_clock::now();
 
