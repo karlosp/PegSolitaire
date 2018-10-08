@@ -11,11 +11,11 @@
 #include <windows.h>
 
 //#define ENABLE_TIME TRUE;
-#define DEBUG
+//#define DEBUG
 
 namespace
 {
-enum PositionType : char
+enum PositionType : int
 {
   Inv /*Invalid*/,
   NoP /*No Peg*/,
