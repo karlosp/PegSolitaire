@@ -8,6 +8,7 @@
 #include <optional>
 #include <unordered_set>
 #include <vector>
+#include <bitset>
 #include <windows.h>
 
 //#define ENABLE_TIME TRUE;
@@ -51,7 +52,8 @@ class MoveFromParent
 namespace ps
 {
 
-using PegPositionContainer = std::array<PositionType, 49>;
+//using PegPositionContainer = std::array<PositionType, 45>;
+using PegPositionContainer = std::bitset<64>;
 
 class Board;
 std::vector<ps::Board*> recycled;
@@ -105,9 +107,9 @@ class Board
 
     PegPositionContainer patched_board = parent->get_positions();
 
-    patched_board[patch0.index] = patch0.type;
-    patched_board[patch1.index] = patch1.type;
-    patched_board[patch2.index] = patch2.type;
+    patched_board.flip(patch0.index);
+    patched_board.flip(patch1.index);
+    patched_board.flip(patch2.index);
 
     set_positions(std::move(patched_board), parent->peg_count() - 1);
   }
@@ -125,20 +127,18 @@ class Board
     {
       int row = std::ceil(counter / 7);
       int col = counter % 7;
-      auto const cell = positions_[counter];
-      if(cell == PositionType::Peg)
+      auto const cell = positions_.test(counter);
+      if(cell)
         std::cout << ".";
-      else if(cell == PositionType::NoP)
+      else
         std::cout << "o";
-      else if(cell == PositionType::Inv)
-        std::cout << " ";
 
       if((counter + 1) % 7 == 0)
         std::cout << "\n";
     }
 
     std::cout << "\n";
-    std::cout << "Peg count: " << peg_counter_ << "\n\n";
+    std::cout << "Peg count: " << positions_.count() << "\n\n";
   }
 
   char ref_count_ = 0;
@@ -151,10 +151,11 @@ class Board
 
 std::unique_ptr<Board> get_english_board()
 {
-  PegPositionContainer positions {std::array<PositionType, 49> {
-      Inv, Inv, Peg, Peg, Peg, Inv, Inv, Inv, Inv, Peg, Peg, Peg, Inv, Inv, Peg, Peg, Peg,
-      Peg, Peg, Peg, Peg, Peg, Peg, Peg, NoP, Peg, Peg, Peg, Peg, Peg, Peg, Peg, Peg, Peg,
-      Peg, Inv, Inv, Peg, Peg, Peg, Inv, Inv, Inv, Inv, Peg, Peg, Peg, Inv, Inv}};
+  PegPositionContainer positions(31035429483399);
+  //{
+  //    Peg, Peg, Peg, Inv, Inv, Inv, Inv, Peg, Peg, Peg, Inv, Inv, Peg, Peg, Peg,
+  //    Peg, Peg, Peg, Peg, Peg, Peg, Peg, NoP, Peg, Peg, Peg, Peg, Peg, Peg, Peg, Peg, Peg,
+  //    Peg, Inv, Inv, Peg, Peg, Peg, Inv, Inv, Inv, Inv, Peg, Peg, Peg};
 
   auto board = std::make_unique<Board>();
   board->set_positions(std::move(positions), 32);
@@ -202,7 +203,7 @@ inline void can_move_left(int index,
                           std::vector<ps::Board*>& solutions,
                           long long& counter)
 {
-  if(board[index - 1] == PositionType::Peg && board[index - 2] == PositionType::NoP)
+  if(board.test(index - 1) && !board.test(index - 2))
   {
     auto peg_position = get_new_board();
     peg_position->set_parent(parent_position,
@@ -221,7 +222,7 @@ inline void can_move_down(int index,
                           std::vector<ps::Board*>& solutions,
                           long long& counter)
 {
-  if(board[index + 7] == PositionType::Peg && board[index + 14] == PositionType::NoP)
+  if(board.test(index + 7) && !board.test(index + 14))
   {
     auto peg_position = get_new_board();
     peg_position->set_parent(parent_position,
@@ -240,7 +241,7 @@ inline void can_move_up(int index,
                         std::vector<ps::Board*>& solutions,
                         long long& counter)
 {
-  if(board[index - 7] == PositionType::Peg && board[index - 14] == PositionType::NoP)
+  if(board.test(index - 7) && !board.test(index - 14))
   {
     auto peg_position = get_new_board();
     peg_position->set_parent(parent_position,
@@ -259,7 +260,7 @@ inline void can_move_right(int index,
                            std::vector<ps::Board*>& solutions,
                            long long& counter)
 {
-  if(board[index + 1] == PositionType::Peg && board[index + 2] == PositionType::NoP)
+  if(board.test(index + 1) && !board.test(index + 2))
   {
     auto peg_position = get_new_board();
     peg_position->set_parent(parent_position,
@@ -316,62 +317,80 @@ std::vector<Board> solve(Board board)
     // generate all possible positions
     //for(auto& row_col : row_cols)
     //{
-    int row_col = 2;
-    if(board[row_col] == PositionType::Peg)
+    int row_col = 0;
+    if(board.test(row_col))
     {
       can_move_right(row_col, board, parent_position, positions, solutions, counter);
       can_move_down(row_col, board, parent_position, positions, solutions, counter);
     }
 
-    row_col = 3;
-    if(board[row_col] == PositionType::Peg)
+    row_col = 1;
+    if(board.test(row_col))
     {
       can_move_down(row_col, board, parent_position, positions, solutions, counter);
     }
 
-    row_col = 4;
-    if(board[row_col] == PositionType::Peg)
+    row_col = 2;
+    if(board.test(row_col))
     {
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
+      can_move_down(row_col, board, parent_position, positions, solutions, counter);
+    }
+
+    row_col = 7;
+    if(board.test(row_col))
+    {
+      can_move_right(row_col, board, parent_position, positions, solutions, counter);
+      can_move_down(row_col, board, parent_position, positions, solutions, counter);
+    }
+
+    row_col = 8;
+    if(board.test(row_col))
+    {
       can_move_down(row_col, board, parent_position, positions, solutions, counter);
     }
 
     row_col = 9;
-    if(board[row_col] == PositionType::Peg)
-    {
-      can_move_right(row_col, board, parent_position, positions, solutions, counter);
-      can_move_down(row_col, board, parent_position, positions, solutions, counter);
-    }
-
-    row_col = 10;
-    if(board[row_col] == PositionType::Peg)
-    {
-      can_move_down(row_col, board, parent_position, positions, solutions, counter);
-    }
-
-    row_col = 11;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
       can_move_down(row_col, board, parent_position, positions, solutions, counter);
     }
 
-    row_col = 14;
-    if(board[row_col] == PositionType::Peg)
+    row_col = 12;
+    if(board.test(row_col))
     {
       can_move_down(row_col, board, parent_position, positions, solutions, counter);
+      can_move_right(row_col, board, parent_position, positions, solutions, counter);
+    }
+
+    row_col = 13;
+    if(board.test(row_col))
+    {
+      can_move_down(row_col, board, parent_position, positions, solutions, counter);
+      can_move_right(row_col, board, parent_position, positions, solutions, counter);
+    }
+
+    row_col = 14;
+    if(board.test(row_col))
+    {
+      can_move_left(row_col, board, parent_position, positions, solutions, counter);
+      can_move_down(row_col, board, parent_position, positions, solutions, counter);
+      can_move_up(row_col, board, parent_position, positions, solutions, counter);
       can_move_right(row_col, board, parent_position, positions, solutions, counter);
     }
 
     row_col = 15;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
+      can_move_left(row_col, board, parent_position, positions, solutions, counter);
       can_move_down(row_col, board, parent_position, positions, solutions, counter);
+      can_move_up(row_col, board, parent_position, positions, solutions, counter);
       can_move_right(row_col, board, parent_position, positions, solutions, counter);
     }
 
     row_col = 16;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
       can_move_down(row_col, board, parent_position, positions, solutions, counter);
@@ -380,51 +399,51 @@ std::vector<Board> solve(Board board)
     }
 
     row_col = 17;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
       can_move_down(row_col, board, parent_position, positions, solutions, counter);
-      can_move_up(row_col, board, parent_position, positions, solutions, counter);
-      can_move_right(row_col, board, parent_position, positions, solutions, counter);
     }
 
     row_col = 18;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
+    {
+      can_move_left(row_col, board, parent_position, positions, solutions, counter);
+      can_move_down(row_col, board, parent_position, positions, solutions, counter);
+    }
+
+    row_col = 19;
+    if(board.test(row_col))
+    {
+      can_move_right(row_col, board, parent_position, positions, solutions, counter);
+    }
+
+    row_col = 20;
+    if(board.test(row_col))
+    {
+      can_move_right(row_col, board, parent_position, positions, solutions, counter);
+    }
+
+    row_col = 21;
+    if(board.test(row_col))
     {
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
       can_move_down(row_col, board, parent_position, positions, solutions, counter);
       can_move_up(row_col, board, parent_position, positions, solutions, counter);
-      can_move_right(row_col, board, parent_position, positions, solutions, counter);
-    }
-
-    row_col = 19;
-    if(board[row_col] == PositionType::Peg)
-    {
-      can_move_left(row_col, board, parent_position, positions, solutions, counter);
-      can_move_down(row_col, board, parent_position, positions, solutions, counter);
-    }
-
-    row_col = 20;
-    if(board[row_col] == PositionType::Peg)
-    {
-      can_move_left(row_col, board, parent_position, positions, solutions, counter);
-      can_move_down(row_col, board, parent_position, positions, solutions, counter);
-    }
-
-    row_col = 21;
-    if(board[row_col] == PositionType::Peg)
-    {
       can_move_right(row_col, board, parent_position, positions, solutions, counter);
     }
 
     row_col = 22;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
+      can_move_left(row_col, board, parent_position, positions, solutions, counter);
+      can_move_down(row_col, board, parent_position, positions, solutions, counter);
+      can_move_up(row_col, board, parent_position, positions, solutions, counter);
       can_move_right(row_col, board, parent_position, positions, solutions, counter);
     }
 
     row_col = 23;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
       can_move_down(row_col, board, parent_position, positions, solutions, counter);
@@ -433,51 +452,51 @@ std::vector<Board> solve(Board board)
     }
 
     row_col = 24;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
-      can_move_down(row_col, board, parent_position, positions, solutions, counter);
-      can_move_up(row_col, board, parent_position, positions, solutions, counter);
-      can_move_right(row_col, board, parent_position, positions, solutions, counter);
     }
 
     row_col = 25;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
-      can_move_down(row_col, board, parent_position, positions, solutions, counter);
+    }
+
+    row_col = 26;
+    if(board.test(row_col))
+    {
       can_move_up(row_col, board, parent_position, positions, solutions, counter);
       can_move_right(row_col, board, parent_position, positions, solutions, counter);
     }
 
-    row_col = 26;
-    if(board[row_col] == PositionType::Peg)
-    {
-      can_move_left(row_col, board, parent_position, positions, solutions, counter);
-    }
-
     row_col = 27;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
-      can_move_left(row_col, board, parent_position, positions, solutions, counter);
+      can_move_up(row_col, board, parent_position, positions, solutions, counter);
+      can_move_right(row_col, board, parent_position, positions, solutions, counter);
     }
 
     row_col = 28;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
+      can_move_left(row_col, board, parent_position, positions, solutions, counter);
+      can_move_down(row_col, board, parent_position, positions, solutions, counter);
       can_move_up(row_col, board, parent_position, positions, solutions, counter);
       can_move_right(row_col, board, parent_position, positions, solutions, counter);
     }
 
     row_col = 29;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
+      can_move_left(row_col, board, parent_position, positions, solutions, counter);
+      can_move_down(row_col, board, parent_position, positions, solutions, counter);
       can_move_up(row_col, board, parent_position, positions, solutions, counter);
       can_move_right(row_col, board, parent_position, positions, solutions, counter);
     }
 
     row_col = 30;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
       can_move_down(row_col, board, parent_position, positions, solutions, counter);
@@ -486,72 +505,54 @@ std::vector<Board> solve(Board board)
     }
 
     row_col = 31;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
-      can_move_down(row_col, board, parent_position, positions, solutions, counter);
       can_move_up(row_col, board, parent_position, positions, solutions, counter);
-      can_move_right(row_col, board, parent_position, positions, solutions, counter);
     }
 
     row_col = 32;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
-      can_move_down(row_col, board, parent_position, positions, solutions, counter);
+      can_move_up(row_col, board, parent_position, positions, solutions, counter);
+    }
+
+    row_col = 35;
+    if(board.test(row_col))
+    {
       can_move_up(row_col, board, parent_position, positions, solutions, counter);
       can_move_right(row_col, board, parent_position, positions, solutions, counter);
     }
 
-    row_col = 33;
-    if(board[row_col] == PositionType::Peg)
+    row_col = 36;
+    if(board.test(row_col))
     {
-      can_move_left(row_col, board, parent_position, positions, solutions, counter);
-      can_move_up(row_col, board, parent_position, positions, solutions, counter);
-    }
-
-    row_col = 34;
-    if(board[row_col] == PositionType::Peg)
-    {
-      can_move_left(row_col, board, parent_position, positions, solutions, counter);
       can_move_up(row_col, board, parent_position, positions, solutions, counter);
     }
 
     row_col = 37;
-    if(board[row_col] == PositionType::Peg)
-    {
-      can_move_up(row_col, board, parent_position, positions, solutions, counter);
-      can_move_right(row_col, board, parent_position, positions, solutions, counter);
-    }
-
-    row_col = 38;
-    if(board[row_col] == PositionType::Peg)
-    {
-      can_move_up(row_col, board, parent_position, positions, solutions, counter);
-    }
-
-    row_col = 39;
-    if(board[row_col] == PositionType::Peg)
+    if(board.test(row_col))
     {
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
       can_move_up(row_col, board, parent_position, positions, solutions, counter);
     }
 
-    row_col = 44;
-    if(board[row_col] == PositionType::Peg)
+    row_col = 42;
+    if(board.test(row_col))
     {
       can_move_up(row_col, board, parent_position, positions, solutions, counter);
       can_move_right(row_col, board, parent_position, positions, solutions, counter);
     }
 
-    row_col = 45;
-    if(board[row_col] == PositionType::Peg)
+    row_col = 43;
+    if(board.test(row_col))
     {
       can_move_up(row_col, board, parent_position, positions, solutions, counter);
     }
 
-    row_col = 46;
-    if(board[row_col] == PositionType::Peg)
+    row_col = 44;
+    if(board.test(row_col))
     {
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
       can_move_up(row_col, board, parent_position, positions, solutions, counter);
