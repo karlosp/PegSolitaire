@@ -1,15 +1,8 @@
 #pragma once
-#include <array>
 #include <bitset>
 #include <chrono>
-#include <deque>
 #include <iostream>
-#include <list>
-#include <memory>
-#include <optional>
-#include <unordered_set>
 #include <vector>
-#include <windows.h>
 
 //#define ENABLE_TIME TRUE;
 //#define DEBUG
@@ -80,25 +73,27 @@ class Board
 
   void print() const
   {
-    SetConsoleOutputCP(65001);
     std::cout << "~~~~~~~~~~~~~~~\n\n";
-    for(auto counter = 0u; counter < positions_.size(); ++counter)
+    std::cout << "oo";
+    for(auto counter = 0u; counter < 47; ++counter)
     {
-      int row = std::ceil(counter / 7);
-      int col = counter % 7;
+      int row = std::ceil((counter + 2) / 7);
+      int col = (counter + 2) % 7;
       auto const cell = positions_.test(counter);
       if(cell)
         std::cout << ".";
       else
         std::cout << "o";
 
-      if((counter + 1) % 7 == 0)
+      if((counter + 1 + 2) % 7 == 0)
         std::cout << "\n";
     }
+    std::cout << "  ";
 
     std::cout << "\n";
     std::cout << "Peg count: " << positions_.count() << "\n\n";
   }
+
 
   char ref_count_ = 0;
 
@@ -243,7 +238,7 @@ std::vector<Board> solve(Board board)
 
   while(!positions.empty() &&
 #ifdef ENABLE_TIME
-        solutions.size() != 1072778
+        solutions.size() <= 10000
 #else
         solutions.empty()
 #endif
