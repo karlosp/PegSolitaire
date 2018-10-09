@@ -14,45 +14,8 @@
 //#define ENABLE_TIME TRUE;
 //#define DEBUG
 
-namespace
-{
-enum PositionType : int
-{
-  Inv /*Invalid*/,
-  NoP /*No Peg*/,
-  Peg
-};
-
-struct PositionPatch
-{
-  int index = 0;
-  PositionType type;
-};
-
-class MoveFromParent
-{
-  public:
-  MoveFromParent(PositionPatch&& first, PositionPatch&& second, PositionPatch&& third)
-  {
-    patches_[0] = std::move(first);
-    patches_[1] = std::move(second);
-    patches_[2] = std::move(third);
-  }
-
-  std::array<PositionPatch, 3> const& get_move() const
-  {
-    return patches_;
-  }
-
-  private:
-  std::array<PositionPatch, 3> patches_;
-};
-} // namespace
-
 namespace ps
 {
-
-//using PegPositionContainer = std::array<PositionType, 45>;
 using PegPositionContainer = std::bitset<64>;
 
 class Board;
@@ -77,7 +40,6 @@ class Board
         parent_ = nullptr;
       }
       recycled.push_back(this);
-      //delete this;
     }
   }
 
@@ -97,21 +59,20 @@ class Board
     return peg_counter_;
   }
 
-  void set_parent(Board* parent,
-                  PositionPatch const& patch0,
-                  PositionPatch const& patch1,
-                  PositionPatch const& patch2)
+  void set_parent(Board* parent, int patch0,
+                  int patch1,
+                  int patch2)
   {
     parent_ = parent;
     parent_->ref_count_++;
 
     PegPositionContainer patched_board = parent->get_positions();
 
-    patched_board.flip(patch0.index);
-    patched_board.flip(patch1.index);
-    patched_board.flip(patch2.index);
+    patched_board.flip(patch0);
+    patched_board.flip(patch1);
+    patched_board.flip(patch2);
 
-    set_positions(std::move(patched_board), parent->peg_count() - 1);
+    set_positions(std::move(patched_board), (int)parent->peg_count() - 1);
   }
 
   Board* get_parent() const
@@ -151,14 +112,14 @@ class Board
 
 std::unique_ptr<Board> get_english_board()
 {
-  PegPositionContainer positions(31035429483399);
+  PegPositionContainer positions(31035429483399); // binary representation
   //{
   //    Peg, Peg, Peg, Inv, Inv, Inv, Inv, Peg, Peg, Peg, Inv, Inv, Peg, Peg, Peg,
   //    Peg, Peg, Peg, Peg, Peg, Peg, Peg, NoP, Peg, Peg, Peg, Peg, Peg, Peg, Peg, Peg, Peg,
   //    Peg, Inv, Inv, Peg, Peg, Peg, Inv, Inv, Inv, Inv, Peg, Peg, Peg};
 
   auto board = std::make_unique<Board>();
-  board->set_positions(std::move(positions), 32);
+  board->set_positions(std::move(positions), (int)positions.count());
 
   return std::move(board);
 }
@@ -206,10 +167,7 @@ inline void can_move_left(int index,
   if(board.test(index - 1) && !board.test(index - 2))
   {
     auto peg_position = get_new_board();
-    peg_position->set_parent(parent_position,
-                             PositionPatch {index, PositionType::NoP},
-                             PositionPatch {index - 1, PositionType::NoP},
-                             PositionPatch {index - 2, PositionType::Peg});
+    peg_position->set_parent(parent_position,index, index - 1, index - 2);
 
     helper_moving_peg_position(peg_position, positions, solutions);
     ++counter;
@@ -225,10 +183,7 @@ inline void can_move_down(int index,
   if(board.test(index + 7) && !board.test(index + 14))
   {
     auto peg_position = get_new_board();
-    peg_position->set_parent(parent_position,
-                             PositionPatch {index, PositionType::NoP},
-                             PositionPatch {index + 7, PositionType::NoP},
-                             PositionPatch {index + 14, PositionType::Peg});
+    peg_position->set_parent(parent_position,index,index + 7,index + 14);
 
     helper_moving_peg_position(peg_position, positions, solutions);
     ++counter;
@@ -244,10 +199,7 @@ inline void can_move_up(int index,
   if(board.test(index - 7) && !board.test(index - 14))
   {
     auto peg_position = get_new_board();
-    peg_position->set_parent(parent_position,
-                             PositionPatch {index, PositionType::NoP},
-                             PositionPatch {index - 7, PositionType::NoP},
-                             PositionPatch {index - 14, PositionType::Peg});
+    peg_position->set_parent(parent_position,index,index - 7, index - 14);
 
     helper_moving_peg_position(peg_position, positions, solutions);
     ++counter;
@@ -263,10 +215,7 @@ inline void can_move_right(int index,
   if(board.test(index + 1) && !board.test(index + 2))
   {
     auto peg_position = get_new_board();
-    peg_position->set_parent(parent_position,
-                             PositionPatch {index, PositionType::NoP},
-                             PositionPatch {index + 1, PositionType::NoP},
-                             PositionPatch {index + 2, PositionType::Peg});
+    peg_position->set_parent(parent_position,index, index + 1,index + 2);
 
     helper_moving_peg_position(peg_position, positions, solutions);
     ++counter;
@@ -288,12 +237,7 @@ std::vector<Board> solve(Board board)
   std::vector<Board*> positions;
   positions.push_back(&board);
   std::vector<Board*> solutions;
-  // clang-format of
-  const std::vector<int> row_cols {2,  3,  4,  9,  10, 11, 14, 15, 16, 17, 18,
-                                   19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                   30, 31, 32, 33, 34, 37, 38, 39, 44, 45, 46};
 
-  //clang-format on
 #ifdef ENABLE_TIME
   auto start = high_resolution_clock::now();
   const auto beggining = start;
@@ -315,8 +259,6 @@ std::vector<Board> solve(Board board)
     auto current_counter = counter;
 
     // generate all possible positions
-    //for(auto& row_col : row_cols)
-    //{
     int row_col = 0;
     if(board.test(row_col))
     {
@@ -557,7 +499,6 @@ std::vector<Board> solve(Board board)
       can_move_left(row_col, board, parent_position, positions, solutions, counter);
       can_move_up(row_col, board, parent_position, positions, solutions, counter);
     }
-    //} //for
 
     has_child = current_counter < counter;
 
