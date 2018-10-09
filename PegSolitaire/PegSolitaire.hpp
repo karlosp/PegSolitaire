@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <bitset>
 #include <chrono>
 #include <deque>
 #include <iostream>
@@ -8,7 +9,6 @@
 #include <optional>
 #include <unordered_set>
 #include <vector>
-#include <bitset>
 #include <windows.h>
 
 //#define ENABLE_TIME TRUE;
@@ -59,9 +59,7 @@ class Board
     return peg_counter_;
   }
 
-  void set_parent(Board* parent, int patch0,
-                  int patch1,
-                  int patch2)
+  void set_parent(Board* parent, int patch0, int patch1, int patch2)
   {
     parent_ = parent;
     parent_->ref_count_++;
@@ -167,7 +165,7 @@ inline void can_move_left(int index,
   if(board.test(index - 1) && !board.test(index - 2))
   {
     auto peg_position = get_new_board();
-    peg_position->set_parent(parent_position,index, index - 1, index - 2);
+    peg_position->set_parent(parent_position, index, index - 1, index - 2);
 
     helper_moving_peg_position(peg_position, positions, solutions);
     ++counter;
@@ -183,7 +181,7 @@ inline void can_move_down(int index,
   if(board.test(index + 7) && !board.test(index + 14))
   {
     auto peg_position = get_new_board();
-    peg_position->set_parent(parent_position,index,index + 7,index + 14);
+    peg_position->set_parent(parent_position, index, index + 7, index + 14);
 
     helper_moving_peg_position(peg_position, positions, solutions);
     ++counter;
@@ -199,7 +197,7 @@ inline void can_move_up(int index,
   if(board.test(index - 7) && !board.test(index - 14))
   {
     auto peg_position = get_new_board();
-    peg_position->set_parent(parent_position,index,index - 7, index - 14);
+    peg_position->set_parent(parent_position, index, index - 7, index - 14);
 
     helper_moving_peg_position(peg_position, positions, solutions);
     ++counter;
@@ -215,7 +213,7 @@ inline void can_move_right(int index,
   if(board.test(index + 1) && !board.test(index + 2))
   {
     auto peg_position = get_new_board();
-    peg_position->set_parent(parent_position,index, index + 1,index + 2);
+    peg_position->set_parent(parent_position, index, index + 1, index + 2);
 
     helper_moving_peg_position(peg_position, positions, solutions);
     ++counter;
