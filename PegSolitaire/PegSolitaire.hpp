@@ -43,13 +43,13 @@ class Board
     }
   }
 
-  void set_positions(PegPositionContainer&& new_positions, int peg_count)
+  void set_positions(PegPositionContainer new_positions, int peg_count)
   {
-    positions_ = std::move(new_positions);
+    positions_ = new_positions;
     peg_counter_ = peg_count;
   }
 
-  PegPositionContainer const& get_positions() const
+  PegPositionContainer get_positions() const
   {
     return positions_;
   }
@@ -72,7 +72,7 @@ class Board
     patched_board.flip(patch1);
     patched_board.flip(patch2);
 
-    set_positions(std::move(patched_board), (int)parent->peg_count() - 1);
+    set_positions(patched_board, (int)parent->peg_count() - 1);
   }
 
   Board* get_parent() const
@@ -119,7 +119,7 @@ std::unique_ptr<Board> get_english_board()
   //    Peg, Inv, Inv, Peg, Peg, Peg, Inv, Inv, Inv, Inv, Peg, Peg, Peg};
 
   auto board = std::make_unique<Board>();
-  board->set_positions(std::move(positions), (int)positions.count());
+  board->set_positions(positions, (int)positions.count());
 
   return std::move(board);
 }
