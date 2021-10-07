@@ -108,8 +108,13 @@ std::size_t move_up(Board b, std::vector<Board>& results) {
   return b.num_pegs;
 }
 
-
+uint64_t counter = 0ull;
 std::size_t solve(Board b, std::vector<Board>& results) {
+  ++counter;
+
+  if (counter % 100000 == 0) {
+    std::cout << counter << "\n";
+  }
   if (b.num_pegs == 1) {
     //print(b);
     results.push_back(b);
